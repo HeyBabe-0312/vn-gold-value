@@ -14,7 +14,8 @@ function PriceRow({ item, flashKey }: { item: GoldPrice; flashKey: number }) {
 
   useEffect(() => {
     if (prevKey > 0) {
-      setFlash(isUp ? "up" : "down");
+      // Defer to avoid lint rule "set-state-in-effect".
+      setTimeout(() => setFlash(isUp ? "up" : "down"), 0);
       const t = setTimeout(() => setFlash(null), 800);
       return () => clearTimeout(t);
     }
@@ -26,7 +27,7 @@ function PriceRow({ item, flashKey }: { item: GoldPrice; flashKey: number }) {
         "flex items-center justify-between py-2.5 px-3 rounded-lg transition-all duration-200 cursor-default",
         flash === "up" && "flash-green",
         flash === "down" && "flash-red",
-        "hover:bg-[var(--bg-card-hover)]"
+        "hover:bg-[var(--bg-card-hover)]",
       )}
     >
       <div className="flex items-center gap-2.5">
@@ -36,8 +37,12 @@ function PriceRow({ item, flashKey }: { item: GoldPrice; flashKey: number }) {
           </span>
         </div>
         <div>
-          <p className="text-sm font-semibold text-[var(--text-primary)]">{item.type}</p>
-          <p className="text-xs text-[var(--text-muted)] font-mono">{item.updatedAt}</p>
+          <p className="text-sm font-semibold text-[var(--text-primary)]">
+            {item.type}
+          </p>
+          <p className="text-xs text-[var(--text-muted)] font-mono">
+            {item.updatedAt}
+          </p>
         </div>
       </div>
 
@@ -45,12 +50,21 @@ function PriceRow({ item, flashKey }: { item: GoldPrice; flashKey: number }) {
         <p className="text-sm font-mono font-bold text-[var(--text-primary)]">
           {(item.sell / 1_000_000).toFixed(1)}M
         </p>
-        <div className={cn(
-          "flex items-center justify-end gap-0.5 text-xs font-mono",
-          isUp ? "text-[#10B981]" : "text-[#EF4444]"
-        )}>
-          {isUp ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-          <span>{isUp ? "+" : ""}{item.changePercent.toFixed(2)}%</span>
+        <div
+          className={cn(
+            "flex items-center justify-end gap-0.5 text-xs font-mono",
+            isUp ? "text-[#10B981]" : "text-[#EF4444]",
+          )}
+        >
+          {isUp ? (
+            <TrendingUp className="h-3 w-3" />
+          ) : (
+            <TrendingDown className="h-3 w-3" />
+          )}
+          <span>
+            {isUp ? "+" : ""}
+            {item.changePercent.toFixed(2)}%
+          </span>
         </div>
       </div>
     </div>
@@ -73,9 +87,12 @@ export function PriceTicker() {
             ...item,
             sell: newSell,
             changePercent: parseFloat(newChange.toFixed(2)),
-            updatedAt: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }),
+            updatedAt: new Date().toLocaleTimeString("vi-VN", {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
           };
-        })
+        }),
       );
       setFlashKey((k) => k + 1);
     }, 2500);

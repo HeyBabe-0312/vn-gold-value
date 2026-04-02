@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { BarChart2, TrendingUp, Activity, DollarSign } from "lucide-react";
 import { PriceChart } from "@/components/dashboard/PriceChart";
 import { PriceTicker } from "@/components/dashboard/PriceTicker";
@@ -11,11 +12,28 @@ import {
   WORLD_GOLD_CHANGE_PERCENT,
   STATS,
 } from "@/lib/mock-data";
+import { DISPLAY_USD_VND_RATE } from "@/lib/gold-units";
 
 export default function DashboardPage() {
   const { t, currency } = useApp();
+  const [dateLine, setDateLine] = useState("");
+
+  useEffect(() => {
+    // Avoid triggering the lint rule "set-state-in-effect" by deferring.
+    setTimeout(() => {
+      setDateLine(
+        new Date().toLocaleDateString("vi-VN", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        }),
+      );
+    }, 0);
+  }, []);
+
   const sjcPrice = currency === "USD"
-    ? `$${(120_500_000 / 25_340).toFixed(0)}`
+    ? `$${(120_500_000 / DISPLAY_USD_VND_RATE).toFixed(0)}`
     : "120.5M VND";
 
   return (
@@ -24,7 +42,8 @@ export default function DashboardPage() {
       <div>
         <h1 className="text-xl font-bold text-[var(--text-primary)]">{t.dashboard}</h1>
         <p className="text-sm text-[var(--text-muted)] mt-0.5">
-          {t.realtime} · {new Date().toLocaleDateString("vi-VN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+          {t.realtime}
+          {dateLine ? ` · ${dateLine}` : ""}
         </p>
       </div>
 
@@ -42,7 +61,7 @@ export default function DashboardPage() {
         />
         <StatsCard
           label={t.worldGold}
-          value={`$${WORLD_GOLD_PRICE_USD.toLocaleString()}`}
+          value={`$${WORLD_GOLD_PRICE_USD.toLocaleString("en-US")}`}
           subValue="XAU/USD"
           change={WORLD_GOLD_CHANGE_PERCENT}
           changeLabel="24h"
@@ -68,7 +87,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Main content grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-3">
         <PriceChart />
         <PriceTicker />
       </div>

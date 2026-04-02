@@ -48,8 +48,8 @@
 }
 
 @theme inline {
-  --font-sans: var(--font-fira-sans), system-ui, sans-serif;
-  --font-mono: var(--font-fira-code), 'JetBrains Mono', monospace;
+  --font-sans: var(--font-vn-sans), system-ui, sans-serif;
+  --font-mono: var(--font-vn-mono), monospace;
   --color-gold: #F59E0B;
   --color-gold-secondary: #FBBF24;
   --color-gold-dim: #D97706;
@@ -69,13 +69,13 @@ html {
 body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  font-family: var(--font-fira-sans), system-ui, sans-serif;
+  font-family: var(--font-vn-sans), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 .font-mono, .tabular-nums {
-  font-family: var(--font-fira-code), monospace;
+  font-family: var(--font-vn-mono), monospace;
 }
 
 /* Scrollbar */

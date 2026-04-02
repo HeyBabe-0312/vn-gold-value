@@ -88,9 +88,6 @@ export default function ConverterPage() {
   const numAmount = parseFloat(amount.replace(/,/g, "")) || 0;
   const result = convertAmount(numAmount, fromCur, toCur);
 
-  const fromData = ALL_CURRENCIES.find((c) => c.code === fromCur);
-  const toData = ALL_CURRENCIES.find((c) => c.code === toCur);
-
   const rate = convertAmount(1, fromCur, toCur);
 
   const handleSwap = useCallback(() => {

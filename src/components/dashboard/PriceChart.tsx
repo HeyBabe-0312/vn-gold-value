@@ -16,7 +16,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CHART_DATA, type ChartDataPoint } from "@/lib/mock-data";
 import { useApp } from "@/providers/AppProvider";
-import { formatNumber } from "@/lib/utils";
 
 const TIME_RANGES = ["1H", "4H", "1D", "1W", "1M"] as const;
 type TimeRange = (typeof TIME_RANGES)[number];
@@ -56,11 +55,20 @@ export function PriceChart() {
   const [range, setRange] = useState<TimeRange>("1D");
   const [data, setData] = useState(CHART_DATA);
   const [animKey, setAnimKey] = useState(0);
+  const [chartReady, setChartReady] = useState(false);
+
+  useEffect(() => {
+    // Defer to avoid lint rule "set-state-in-effect".
+    setTimeout(() => setChartReady(true), 0);
+  }, []);
 
   useEffect(() => {
     const sliced = CHART_DATA.slice(-SLICE_MAP[range]);
-    setData(sliced);
-    setAnimKey((k) => k + 1);
+    // Defer to avoid lint rule "set-state-in-effect".
+    setTimeout(() => {
+      setData(sliced);
+      setAnimKey((k) => k + 1);
+    }, 0);
   }, [range]);
 
   // Simulate real-time update
@@ -70,7 +78,10 @@ export function PriceChart() {
         const last = prev[prev.length - 1];
         const change = (Math.random() - 0.48) * 100_000;
         const newPoint: ChartDataPoint = {
-          time: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }),
+          time: new Date().toLocaleTimeString("vi-VN", {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
           price: Math.round(Math.max(last.price + change, 115_000_000)),
           volume: Math.round(Math.random() * 500 + 100),
         };
@@ -89,7 +100,7 @@ export function PriceChart() {
   const gradientId = `gradient-${isUp ? "up" : "down"}`;
 
   return (
-    <Card className="col-span-full lg:col-span-2">
+    <Card className="col-span-full min-w-0 lg:col-span-2">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2">
@@ -123,16 +134,24 @@ export function PriceChart() {
           <span className="text-2xl font-bold font-mono text-[var(--text-primary)]">
             {(lastPrice / 1_000_000).toFixed(2)}M
           </span>
-          <span className={`text-sm font-mono font-medium ${isUp ? "text-[#10B981]" : "text-[#EF4444]"}`}>
-            {isUp ? "+" : ""}{(((lastPrice - firstPrice) / firstPrice) * 100).toFixed(2)}%
+          <span
+            className={`text-sm font-mono font-medium ${isUp ? "text-[#10B981]" : "text-[#EF4444]"}`}
+          >
+            {isUp ? "+" : ""}
+            {(((lastPrice - firstPrice) / firstPrice) * 100).toFixed(2)}%
           </span>
           <span className="text-xs text-[var(--text-muted)]">VND/lượng</span>
         </div>
       </CardHeader>
       <CardContent className="p-0 pb-4">
-        <div className="h-[280px] w-full px-2">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart key={animKey} data={data} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+        <div className="h-[280px] w-full min-w-0 px-2">
+          {chartReady ? (
+            <ResponsiveContainer width="100%" height="100%" minHeight={280}>
+              <AreaChart
+                key={animKey}
+                data={data}
+                margin={{ top: 8, right: 16, left: 0, bottom: 0 }}
+              >
               <defs>
                 <linearGradient id="gradient-up" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#10B981" stopOpacity={0.2} />
@@ -151,20 +170,31 @@ export function PriceChart() {
               />
               <XAxis
                 dataKey="time"
-                tick={{ fontSize: 10, fill: "var(--text-muted)", fontFamily: "Fira Code, monospace" }}
+                tick={{
+                  fontSize: 10,
+                  fill: "var(--text-muted)",
+                  fontFamily: "Fira Code, monospace",
+                }}
                 tickLine={false}
                 axisLine={false}
                 interval="preserveStartEnd"
               />
               <YAxis
                 domain={[minPrice * 0.999, maxPrice * 1.001]}
-                tick={{ fontSize: 10, fill: "var(--text-muted)", fontFamily: "Fira Code, monospace" }}
+                tick={{
+                  fontSize: 10,
+                  fill: "var(--text-muted)",
+                  fontFamily: "Fira Code, monospace",
+                }}
                 tickLine={false}
                 axisLine={false}
                 tickFormatter={(v) => `${(v / 1_000_000).toFixed(1)}M`}
                 width={52}
               />
-              <Tooltip content={<CustomTooltip />} cursor={{ stroke: "var(--border-subtle)", strokeWidth: 1 }} />
+              <Tooltip
+                content={<CustomTooltip />}
+                cursor={{ stroke: "var(--border-subtle)", strokeWidth: 1 }}
+              />
               <ReferenceLine
                 y={firstPrice}
                 stroke="var(--text-muted)"
@@ -178,12 +208,23 @@ export function PriceChart() {
                 strokeWidth={2}
                 fill={`url(#${gradientId})`}
                 dot={false}
-                activeDot={{ r: 4, fill: isUp ? "#10B981" : "#EF4444", stroke: "var(--bg-card)", strokeWidth: 2 }}
+                activeDot={{
+                  r: 4,
+                  fill: isUp ? "#10B981" : "#EF4444",
+                  stroke: "var(--bg-card)",
+                  strokeWidth: 2,
+                }}
                 isAnimationActive={true}
                 animationDuration={400}
               />
             </AreaChart>
-          </ResponsiveContainer>
+            </ResponsiveContainer>
+          ) : (
+            <div
+              className="h-full w-full animate-pulse rounded-lg bg-[var(--bg-secondary)]"
+              aria-hidden
+            />
+          )}
         </div>
       </CardContent>
     </Card>

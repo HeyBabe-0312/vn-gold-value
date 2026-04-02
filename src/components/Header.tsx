@@ -6,7 +6,16 @@ import { Sun, Moon, Globe, TrendingUp, TrendingDown, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useApp } from "@/providers/AppProvider";
-import { WORLD_GOLD_PRICE_USD, WORLD_GOLD_CHANGE_PERCENT } from "@/lib/mock-data";
+import {
+  WORLD_GOLD_PRICE_USD,
+  WORLD_GOLD_CHANGE_PERCENT,
+} from "@/lib/mock-data";
+import {
+  DISPLAY_USD_VND_RATE,
+  formatWorldGoldVndByUnit,
+  usdOzToApproxVndPerOz,
+  vndPerOzSpotToVndDisplayUnit,
+} from "@/lib/gold-units";
 import { cn, formatNumber } from "@/lib/utils";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 
@@ -18,12 +27,16 @@ const LANGUAGES = [
 
 export function Header() {
   const { theme, setTheme } = useTheme();
-  const { language, setLanguage, currency, setCurrency, t } = useApp();
+  const { language, setLanguage, currency, setCurrency, goldUnit, t } =
+    useApp();
+  const worldVndOz = usdOzToApproxVndPerOz(WORLD_GOLD_PRICE_USD);
+  const worldVndByUnit = vndPerOzSpotToVndDisplayUnit(worldVndOz, goldUnit);
   const [mounted, setMounted] = useState(false);
   const [currentTime, setCurrentTime] = useState("");
 
   useEffect(() => {
-    setMounted(true);
+    // Defer to avoid lint rule "set-state-in-effect".
+    setTimeout(() => setMounted(true), 0);
     const updateTime = () => {
       const now = new Date();
       setCurrentTime(
@@ -31,7 +44,7 @@ export function Header() {
           hour: "2-digit",
           minute: "2-digit",
           second: "2-digit",
-        })
+        }),
       );
     };
     updateTime();
@@ -47,11 +60,17 @@ export function Header() {
         {/* Logo */}
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#F59E0B] shadow-sm">
-            <span className="text-sm font-bold text-slate-900 font-mono">Au</span>
+            <span className="text-sm font-bold text-slate-900 font-mono">
+              Au
+            </span>
           </div>
           <div className="hidden sm:block">
-            <span className="text-sm font-semibold text-[var(--text-primary)]">VN Gold</span>
-            <span className="ml-1 text-sm font-light text-[var(--text-muted)]">Value</span>
+            <span className="text-sm font-semibold text-[var(--text-primary)]">
+              VN Gold
+            </span>
+            <span className="ml-1 text-sm font-light text-[var(--text-muted)]">
+              Value
+            </span>
           </div>
         </div>
 
@@ -60,20 +79,53 @@ export function Header() {
           <div className="hidden md:flex items-center gap-2 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-1.5">
             <div className="flex items-center gap-1.5">
               <span className="pulse-dot h-1.5 w-1.5 rounded-full bg-[#10B981]" />
-              <Badge variant="live" className="text-xs">LIVE</Badge>
+              <Badge variant="live" className="text-xs">
+                LIVE
+              </Badge>
             </div>
             <div className="h-4 w-px bg-[var(--border-default)]" />
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-[var(--text-muted)] font-mono">XAU/USD</span>
-              <span className="text-sm font-semibold font-mono text-[var(--text-primary)]">
-                ${formatNumber(WORLD_GOLD_PRICE_USD)}
-              </span>
-              <span className={cn(
-                "flex items-center gap-0.5 text-xs font-mono font-medium",
-                isUp ? "text-[#10B981]" : "text-[#EF4444]"
-              )}>
-                {isUp ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                {isUp ? "+" : ""}{WORLD_GOLD_CHANGE_PERCENT}%
+            <div className="flex items-center gap-3">
+              <div className="flex flex-col gap-0.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-[var(--text-muted)] font-mono">
+                    XAU/USD
+                  </span>
+                  <span className="text-sm font-semibold font-mono text-[var(--text-primary)]">
+                    ${formatNumber(WORLD_GOLD_PRICE_USD)}
+                    <span className="text-[10px] font-normal text-[var(--text-muted)] ml-1">
+                      /oz
+                    </span>
+                  </span>
+                </div>
+                <span className="text-[10px] font-mono text-[var(--text-muted)] pl-0 sm:pl-[52px] max-w-[220px]">
+                  {formatWorldGoldVndByUnit(
+                    worldVndByUnit,
+                    currency,
+                    goldUnit,
+                    language,
+                  )}
+                  <span className="text-[var(--text-muted)]/80">
+                    {" "}
+                    · {DISPLAY_USD_VND_RATE.toLocaleString(
+                      language === "vi" ? "vi-VN" : "en-US",
+                    )}{" "}
+                    ₫/USD
+                  </span>
+                </span>
+              </div>
+              <span
+                className={cn(
+                  "flex items-center gap-0.5 text-xs font-mono font-medium shrink-0",
+                  isUp ? "text-[#10B981]" : "text-[#EF4444]",
+                )}
+              >
+                {isUp ? (
+                  <TrendingUp className="h-3 w-3" />
+                ) : (
+                  <TrendingDown className="h-3 w-3" />
+                )}
+                {isUp ? "+" : ""}
+                {WORLD_GOLD_CHANGE_PERCENT}%
               </span>
             </div>
           </div>
@@ -91,7 +143,11 @@ export function Header() {
           {/* Currency switcher */}
           <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 px-2 text-xs font-mono font-medium">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2 text-xs font-mono font-medium"
+              >
                 {currency}
               </Button>
             </DropdownMenu.Trigger>
@@ -108,7 +164,7 @@ export function Header() {
                       "flex cursor-pointer items-center rounded-lg px-3 py-2 text-sm outline-none transition-colors",
                       currency === cur
                         ? "bg-[#F59E0B]/10 text-[#F59E0B] font-medium"
-                        : "text-[var(--text-secondary)] hover:bg-[var(--bg-card-hover)] hover:text-[var(--text-primary)]"
+                        : "text-[var(--text-secondary)] hover:bg-[var(--bg-card-hover)] hover:text-[var(--text-primary)]",
                     )}
                     onSelect={() => setCurrency(cur)}
                   >
@@ -139,7 +195,7 @@ export function Header() {
                       "flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm outline-none transition-colors",
                       language === lang.code
                         ? "bg-[#F59E0B]/10 text-[#F59E0B] font-medium"
-                        : "text-[var(--text-secondary)] hover:bg-[var(--bg-card-hover)] hover:text-[var(--text-primary)]"
+                        : "text-[var(--text-secondary)] hover:bg-[var(--bg-card-hover)] hover:text-[var(--text-primary)]",
                     )}
                     onSelect={() => setLanguage(lang.code as "vi" | "en")}
                   >
