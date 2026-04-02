@@ -56,7 +56,12 @@ export function MarketOverview() {
       <CardContent className="pt-0">
         <div className="h-[180px] w-full min-w-0">
           {chartReady ? (
-            <ResponsiveContainer width="100%" height="100%" minHeight={180}>
+            <ResponsiveContainer
+              width="100%"
+              height="100%"
+              minHeight={180}
+              minWidth={0}
+            >
               <BarChart
                 data={data}
                 margin={{ top: 4, right: 8, left: 0, bottom: 0 }}
@@ -117,11 +122,11 @@ export function MarketOverview() {
         <div className="flex items-center gap-4 mt-2 px-1">
           <div className="flex items-center gap-1.5">
             <div className="h-2 w-2 rounded-full bg-[#10B981]" />
-            <span className="text-xs text-[var(--text-muted)]">Tăng</span>
+            <span className="text-xs text-[var(--text-muted)]">{t.increaseLabel}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="h-2 w-2 rounded-full bg-[#EF4444]" />
-            <span className="text-xs text-[var(--text-muted)]">Giảm</span>
+            <span className="text-xs text-[var(--text-muted)]">{t.decreaseLabel}</span>
           </div>
         </div>
       </CardContent>

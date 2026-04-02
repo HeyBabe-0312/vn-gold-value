@@ -201,7 +201,7 @@ export default function AssetsPage() {
                         </>
                       ) : (
                         <>
-                          Giá: {formatVnd(pricePerDisplayUnit)} / {unitLabel}
+                          {t.buy}: {formatVnd(pricePerDisplayUnit)} / {unitLabel}
                         </>
                       )}
                       <span className="text-[10px] text-[var(--text-muted)]"> · {r.code}</span>
@@ -262,7 +262,9 @@ export default function AssetsPage() {
           </div>
           <div className="flex items-center gap-2 text-[#F59E0B]">
             <Coins className="h-4 w-4" />
-            <span className="text-xs font-medium font-mono">{goldUnit === "chi" ? "VND/chỉ" : "VND/lượng"}</span>
+            <span className="text-xs font-medium font-mono">
+              {goldUnit === "chi" ? t.perChi : t.perLuong}
+            </span>
           </div>
         </div>
 

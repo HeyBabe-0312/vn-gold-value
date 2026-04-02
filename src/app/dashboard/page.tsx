@@ -50,11 +50,11 @@ export default function DashboardPage() {
       {/* Stats grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatsCard
-          label="SJC (Bán)"
+          label={`SJC (${t.sell})`}
           value={sjcPrice}
-          subValue="Giá bán lẻ"
+          subValue={t.retailPrice}
           change={0.42}
-          changeLabel="hôm nay"
+          changeLabel={t.today}
           icon={TrendingUp}
           iconColor="#F59E0B"
           glowGold
@@ -71,16 +71,16 @@ export default function DashboardPage() {
         <StatsCard
           label={t.high}
           value={`${(STATS.highPrice / 1_000_000).toFixed(1)}M`}
-          subValue="VND/lượng"
+          subValue={t.perLuong}
           icon={BarChart2}
           iconColor="#10B981"
         />
         <StatsCard
           label={t.volume}
           value={STATS.totalVolume}
-          subValue="lượng giao dịch"
+          subValue={t.tradeVolumeUnit}
           change={5.2}
-          changeLabel="vs hôm qua"
+          changeLabel={t.vsYesterday}
           icon={Activity}
           iconColor="#3B82F6"
         />
@@ -98,7 +98,9 @@ export default function DashboardPage() {
 
         {/* World prices card */}
         <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] p-5">
-          <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-4">Giá vàng thế giới</h3>
+          <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-4">
+            {t.worldGoldPricesTitle}
+          </h3>
           <div className="space-y-3">
             {[
               { label: "Spot Gold (XAU)", price: "$3,124.50", change: "+0.40%", up: true },

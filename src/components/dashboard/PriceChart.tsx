@@ -146,7 +146,12 @@ export function PriceChart() {
       <CardContent className="p-0 pb-4">
         <div className="h-[280px] w-full min-w-0 px-2">
           {chartReady ? (
-            <ResponsiveContainer width="100%" height="100%" minHeight={280}>
+            <ResponsiveContainer
+              width="100%"
+              height="100%"
+              minHeight={280}
+              minWidth={0}
+            >
               <AreaChart
                 key={animKey}
                 data={data}

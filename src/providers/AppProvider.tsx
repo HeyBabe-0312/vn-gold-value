@@ -1,23 +1,18 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext } from "react";
 import { ThemeProvider } from "next-themes";
-import { TRANSLATIONS } from "@/lib/mock-data";
-import type { GoldWeightUnit } from "@/lib/gold-units";
-
-type Language = "vi" | "en";
-type Currency = "VND" | "USD";
-
-const GOLD_UNIT_KEY = "vn-gold-weight-unit";
+import { useMessages } from "next-intl";
+import { VnSettingProvider, useVnSetting } from "@/providers/VnSettingProvider";
 
 interface AppContextType {
-  language: Language;
-  setLanguage: (lang: Language) => void;
-  currency: Currency;
-  setCurrency: (cur: Currency) => void;
-  goldUnit: GoldWeightUnit;
-  setGoldUnit: (u: GoldWeightUnit) => void;
-  t: (typeof TRANSLATIONS)["vi"];
+  language: "vi" | "en";
+  setLanguage: (lang: "vi" | "en") => void;
+  currency: "VND" | "USD";
+  setCurrency: (cur: "VND" | "USD") => void;
+  goldUnit: "luong" | "chi";
+  setGoldUnit: (u: "luong" | "chi") => void;
+  t: Record<string, string>;
 }
 
 const AppContext = createContext<AppContextType>({
@@ -27,7 +22,7 @@ const AppContext = createContext<AppContextType>({
   setCurrency: () => {},
   goldUnit: "luong",
   setGoldUnit: () => {},
-  t: TRANSLATIONS["vi"],
+  t: {},
 });
 
 export function useApp() {
@@ -35,43 +30,19 @@ export function useApp() {
 }
 
 function AppContextProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLanguage] = useState<Language>("vi");
-  const [currency, setCurrency] = useState<Currency>("VND");
-  const [goldUnit, setGoldUnitState] = useState<GoldWeightUnit>("luong");
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(GOLD_UNIT_KEY);
-      if (raw === "chi" || raw === "luong") {
-        // Defer to avoid lint rule "set-state-in-effect".
-        setTimeout(() => setGoldUnitState(raw), 0);
-      }
-    } catch {
-      /* ignore */
-    }
-  }, []);
-
-  const setGoldUnit = (u: GoldWeightUnit) => {
-    setGoldUnitState(u);
-    try {
-      localStorage.setItem(GOLD_UNIT_KEY, u);
-    } catch {
-      /* ignore */
-    }
-  };
-
-  const t = TRANSLATIONS[language];
+  const { setting, setLocale, setCurrency, setWeightUnit } = useVnSetting();
+  const messages = useMessages() as unknown as Record<string, string>;
 
   return (
     <AppContext.Provider
       value={{
-        language,
-        setLanguage,
-        currency,
+        language: setting.locale,
+        setLanguage: setLocale,
+        currency: setting.currency,
         setCurrency,
-        goldUnit,
-        setGoldUnit,
-        t,
+        goldUnit: setting.weightUnit,
+        setGoldUnit: setWeightUnit,
+        t: messages,
       }}
     >
       {children}
@@ -82,7 +53,9 @@ function AppContextProvider({ children }: { children: React.ReactNode }) {
 export function AppProvider({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" disableTransitionOnChange>
-      <AppContextProvider>{children}</AppContextProvider>
+      <VnSettingProvider>
+        <AppContextProvider>{children}</AppContextProvider>
+      </VnSettingProvider>
     </ThemeProvider>
   );
 }

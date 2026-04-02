@@ -205,7 +205,9 @@ export default function ConverterPage() {
 
       {/* Exchange rates table */}
       <div>
-        <h2 className="text-base font-semibold text-[var(--text-primary)] mb-3">Tỷ giá ngoại tệ (VND)</h2>
+        <h2 className="text-base font-semibold text-[var(--text-primary)] mb-3">
+          {t.currencyRatesTitle}
+        </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {CURRENCY_RATES.map((rate) => {
             const isUp = rate.change >= 0;

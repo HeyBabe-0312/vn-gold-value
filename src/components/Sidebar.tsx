@@ -29,7 +29,7 @@ export function Sidebar() {
       <PersonalAssetsSummaryCard />
       <nav className="flex flex-col gap-1 px-3">
         <div className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
-          Menu
+          {t.menu}
         </div>
         {navItems.map(({ href, icon: Icon, labelKey }) => {
           const isActive =

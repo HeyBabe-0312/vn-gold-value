@@ -5,6 +5,8 @@ import { AppProvider } from "@/providers/AppProvider";
 import { ReduxProvider } from "@/providers/ReduxProvider";
 import { Header } from "@/components/Header";
 import { Sidebar, MobileNav } from "@/components/Sidebar";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
 
 const vnSans = Be_Vietnam_Pro({
   variable: "--font-vn-sans",
@@ -27,11 +29,14 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
     <html
       lang="vi"
@@ -39,20 +44,22 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="h-full antialiased">
-        <ReduxProvider>
-          <AppProvider>
-            <div className="flex h-full flex-col">
-              <Header />
-              <div className="flex flex-1 overflow-hidden">
-                <Sidebar />
-                <main className="min-w-0 flex-1 overflow-y-auto bg-[var(--bg-secondary)]">
-                  {children}
-                </main>
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <ReduxProvider>
+            <AppProvider>
+              <div className="flex h-full flex-col">
+                <Header />
+                <div className="flex flex-1 overflow-hidden">
+                  <Sidebar />
+                  <main className="min-w-0 flex-1 overflow-y-auto bg-[var(--bg-secondary)]">
+                    {children}
+                  </main>
+                </div>
+                <MobileNav />
               </div>
-              <MobileNav />
-            </div>
-          </AppProvider>
-        </ReduxProvider>
+            </AppProvider>
+          </ReduxProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

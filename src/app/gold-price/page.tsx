@@ -170,7 +170,8 @@ export default function GoldPricePage() {
   };
 
   const renderSortIcon = (field: SortField) => {
-    if (sortField !== field) return <ChevronUp className="h-3 w-3 opacity-30" />;
+    if (sortField !== field)
+      return <ChevronUp className="h-3 w-3 opacity-30" />;
     return sortDir === "asc" ? (
       <ChevronUp className="h-3 w-3 text-[#F59E0B]" />
     ) : (
@@ -192,9 +193,9 @@ export default function GoldPricePage() {
           </h1>
           <p className="text-sm text-[var(--text-muted)] mt-0.5 font-mono">
             {loading
-              ? "Đang tải…"
+              ? t.loading
               : updateLabel
-                ? `Cập nhật: ${updateLabel}`
+                ? `${t.updatedPrefix} ${updateLabel}`
                 : "—"}
           </p>
           <p className="text-[11px] text-[var(--text-muted)] mt-1 max-w-md">
@@ -466,7 +467,7 @@ export default function GoldPricePage() {
                 </th>
                 <th className="text-center py-3 px-4 hidden lg:table-cell">
                   <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-                    Xu hướng
+                    {t.trend}
                   </span>
                 </th>
               </tr>
@@ -478,7 +479,7 @@ export default function GoldPricePage() {
                     colSpan={5}
                     className="py-12 text-center text-[var(--text-muted)]"
                   >
-                    Đang tải giá trong nước…
+                    {t.loadingDomestic}
                   </td>
                 </tr>
               ) : sorted.length === 0 ? (
@@ -487,7 +488,7 @@ export default function GoldPricePage() {
                     colSpan={5}
                     className="py-12 text-center text-[var(--text-muted)]"
                   >
-                    Không có bản ghi VND.
+                    {t.noVndRecords}
                   </td>
                 </tr>
               ) : (
