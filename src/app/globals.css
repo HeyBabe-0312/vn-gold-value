@@ -1,0 +1,140 @@
+@import "tailwindcss";
+
+:root {
+  --gold-primary: #F59E0B;
+  --gold-secondary: #FBBF24;
+  --gold-dim: #D97706;
+  --purple-accent: #8B5CF6;
+  --purple-light: #A78BFA;
+
+  --bg-primary: #ffffff;
+  --bg-secondary: #F8FAFC;
+  --bg-card: #ffffff;
+  --bg-card-hover: #F1F5F9;
+  --bg-sidebar: #F8FAFC;
+
+  --border-default: #E2E8F0;
+  --border-subtle: #F1F5F9;
+
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: #94A3B8;
+
+  --green-up: #10B981;
+  --red-down: #EF4444;
+
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+}
+
+.dark {
+  --bg-primary: #0F172A;
+  --bg-secondary: #0A0F1E;
+  --bg-card: #1E293B;
+  --bg-card-hover: #263548;
+  --bg-sidebar: #0D1526;
+
+  --border-default: #1E293B;
+  --border-subtle: #334155;
+
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.4);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.4);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.6), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+}
+
+@theme inline {
+  --font-sans: var(--font-fira-sans), system-ui, sans-serif;
+  --font-mono: var(--font-fira-code), 'JetBrains Mono', monospace;
+  --color-gold: #F59E0B;
+  --color-gold-secondary: #FBBF24;
+  --color-gold-dim: #D97706;
+  --color-purple: #8B5CF6;
+  --color-green-up: #10B981;
+  --color-red-down: #EF4444;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-fira-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.font-mono, .tabular-nums {
+  font-family: var(--font-fira-code), monospace;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-subtle);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Gold glow effect */
+.gold-glow {
+  text-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+}
+
+.gold-border-glow {
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.3), 0 0 20px rgba(245, 158, 11, 0.08);
+}
+
+/* Animated ticker pulse */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+.pulse-dot {
+  animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+/* Price flash animations */
+@keyframes flash-green {
+  0% { background-color: rgba(16, 185, 129, 0.2); }
+  100% { background-color: transparent; }
+}
+@keyframes flash-red {
+  0% { background-color: rgba(239, 68, 68, 0.2); }
+  100% { background-color: transparent; }
+}
+
+.flash-green { animation: flash-green 0.8s ease-out; }
+.flash-red { animation: flash-red 0.8s ease-out; }
+
+/* Chart tooltip */
+.recharts-tooltip-wrapper {
+  outline: none !important;
+}
+
+/* Reduce motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
