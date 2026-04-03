@@ -6,7 +6,7 @@ import { Wallet, Coins, ArrowUpRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useApp } from "@/providers/AppProvider";
-import { DISPLAY_USD_VND_RATE } from "@/lib/gold-units";
+import { intlLocaleForApp } from "@/lib/vn-setting";
 import {
   displayQtyLuongToUnit,
   loadPersonalAssets,
@@ -14,22 +14,20 @@ import {
   formatQty,
   PERSONAL_ASSETS_EVENT,
 } from "@/lib/personal-assets";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { fetchGoldPrices } from "@/store/goldPricesSlice";
-
-const AUTO_REFRESH_TICK_MS = 60 * 1000;
+import { useAppSelector, useUsdVndRate } from "@/store/hooks";
 
 function formatVnd(value: number) {
   if (!Number.isFinite(value)) return "—";
-  if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(2)}B VND`;
+  if (value >= 1_000_000_000)
+    return `${(value / 1_000_000_000).toFixed(2)}B VND`;
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(2)}M VND`;
   return `${Math.round(value).toLocaleString("vi-VN")} VND`;
 }
 
 export function PersonalAssetsSummaryCard() {
   const { t, currency, goldUnit, language } = useApp();
-  const dispatch = useAppDispatch();
   const goldState = useAppSelector((s) => s.goldPrices);
+  const usdVndRate = useUsdVndRate();
 
   const [assets, setAssets] = useState<PersonalAssetsMap>({});
   const prices = goldState.vndRows;
@@ -50,15 +48,6 @@ export function PersonalAssetsSummaryCard() {
     return () => window.removeEventListener(PERSONAL_ASSETS_EVENT, onUpdated);
   }, []);
 
-  useEffect(() => {
-    // Shared cached API data: only fetch when stale (> 10 minutes).
-    void dispatch(fetchGoldPrices({ force: false }));
-    const id = setInterval(
-      () => void dispatch(fetchGoldPrices({ force: false })),
-      AUTO_REFRESH_TICK_MS,
-    );
-    return () => clearInterval(id);
-  }, [dispatch]);
 
   const computed = useMemo(() => {
     const entries = prices.map((p) => ({
@@ -87,13 +76,16 @@ export function PersonalAssetsSummaryCard() {
 
   const totalDisplay = useMemo(() => {
     if (currency === "USD") {
-      const totalUsd = computed.totalVnd / DISPLAY_USD_VND_RATE;
-      return `$${totalUsd.toLocaleString(language === "vi" ? "vi-VN" : "en-US", {
-        maximumFractionDigits: 0,
-      })}`;
+      const totalUsd = computed.totalVnd / usdVndRate;
+      return `$${totalUsd.toLocaleString(
+        intlLocaleForApp(language),
+        {
+          maximumFractionDigits: 0,
+        },
+      )}`;
     }
     return formatVnd(computed.totalVnd);
-  }, [computed.totalVnd, currency, language]);
+  }, [computed.totalVnd, currency, language, usdVndRate]);
 
   const topLabel = useMemo(() => {
     if (!computed.top) return null;
@@ -105,7 +97,11 @@ export function PersonalAssetsSummaryCard() {
 
   return (
     <div className="mb-4 mx-3">
-      <Link href="/assets" className="block cursor-pointer" aria-label="Personal assets">
+      <Link
+        href="/assets"
+        className="block cursor-pointer"
+        aria-label="Personal assets"
+      >
         <Card className="rounded-xl">
           <CardContent className="p-3">
             <div className="flex items-start justify-between mb-2">
@@ -141,4 +137,3 @@ export function PersonalAssetsSummaryCard() {
     </div>
   );
 }
-

@@ -6,10 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useApp } from "@/providers/AppProvider";
-import {
-  CHI_PER_LUONG,
-  DISPLAY_USD_VND_RATE,
-} from "@/lib/gold-units";
+import { intlLocaleForApp } from "@/lib/vn-setting";
+import { CHI_PER_LUONG } from "@/lib/gold-units";
 import {
   deltaLuongForUnitStep,
   displayQtyLuongToUnit,
@@ -19,12 +17,12 @@ import {
   type PersonalAssetsMap,
 } from "@/lib/personal-assets";
 
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { fetchGoldPrices } from "@/store/goldPricesSlice";
+import { useAppSelector, useUsdVndRate } from "@/store/hooks";
 
 function formatVnd(value: number) {
   if (!Number.isFinite(value)) return "—";
-  if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(2)}B VND`;
+  if (value >= 1_000_000_000)
+    return `${(value / 1_000_000_000).toFixed(2)}B VND`;
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(2)}M VND`;
   return `${Math.round(value).toLocaleString("vi-VN")} VND`;
 }
@@ -33,10 +31,11 @@ export default function AssetsPage() {
   const { t, language, currency, goldUnit, setGoldUnit } = useApp();
 
   const [assetsDraft, setAssetsDraft] = useState<PersonalAssetsMap>({});
-  const dispatch = useAppDispatch();
   const goldState = useAppSelector((s) => s.goldPrices);
+  const usdVndRate = useUsdVndRate();
   const prices = goldState.vndRows;
-  const loadingPrices = goldState.status === "idle" || goldState.status === "loading";
+  const loadingPrices =
+    goldState.status === "idle" || goldState.status === "loading";
   const [saving, setSaving] = useState(false);
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
 
@@ -45,16 +44,6 @@ export default function AssetsPage() {
       setAssetsDraft(loadPersonalAssets());
     }, 0);
   }, []);
-
-  useEffect(() => {
-    // Shared cached API data: only fetch when stale (>10 minutes).
-    void dispatch(fetchGoldPrices({ force: false }));
-    const id = setInterval(
-      () => void dispatch(fetchGoldPrices({ force: false })),
-      60 * 1000,
-    );
-    return () => clearInterval(id);
-  }, [dispatch]);
 
   const unitLabel = goldUnit === "chi" ? t.unitChi : t.unitLuong;
   const stepInUnit = 1;
@@ -68,18 +57,24 @@ export default function AssetsPage() {
   }, [prices]);
 
   const totalVnd = useMemo(() => {
-    return rows.reduce((sum, r) => sum + (assetsDraft[r.code] ?? 0) * r.sell, 0);
+    return rows.reduce(
+      (sum, r) => sum + (assetsDraft[r.code] ?? 0) * r.sell,
+      0,
+    );
   }, [rows, assetsDraft]);
 
   const totalDisplay = useMemo(() => {
     if (currency === "USD") {
-      const totalUsd = totalVnd / DISPLAY_USD_VND_RATE;
-      return `$${totalUsd.toLocaleString(language === "vi" ? "vi-VN" : "en-US", {
-        maximumFractionDigits: 0,
-      })}`;
+      const totalUsd = totalVnd / usdVndRate;
+      return `$${totalUsd.toLocaleString(
+        intlLocaleForApp(language),
+        {
+          maximumFractionDigits: 0,
+        },
+      )}`;
     }
     return formatVnd(totalVnd);
-  }, [currency, totalVnd, language]);
+  }, [currency, totalVnd, language, usdVndRate]);
 
   const onChangeQty = (code: string, deltaLuong: number) => {
     setAssetsDraft((prev) => {
@@ -108,7 +103,9 @@ export default function AssetsPage() {
   return (
     <div className="flex flex-col gap-6 p-4 md:p-6 pb-24 md:pb-6">
       <div className="flex flex-col gap-3">
-        <h1 className="text-xl font-bold text-[var(--text-primary)]">{t.assetsTitle}</h1>
+        <h1 className="text-xl font-bold text-[var(--text-primary)]">
+          {t.assetsTitle}
+        </h1>
 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Card className="w-full">
@@ -166,7 +163,9 @@ export default function AssetsPage() {
       <Card>
         <CardContent className="p-0">
           <div className="px-4 pt-4 pb-2">
-            <div className="text-sm font-semibold text-[var(--text-primary)]">{t.assetsListTitle}</div>
+            <div className="text-sm font-semibold text-[var(--text-primary)]">
+              {t.assetsListTitle}
+            </div>
             <div className="text-xs text-[var(--text-muted)] mt-1 font-mono">
               {t.assetsPerUnitHint}
             </div>
@@ -181,7 +180,7 @@ export default function AssetsPage() {
 
               const pricePerDisplayUnit =
                 currency === "USD"
-                  ? pricePerDisplayUnitVnd / DISPLAY_USD_VND_RATE
+                  ? pricePerDisplayUnitVnd / usdVndRate
                   : pricePerDisplayUnitVnd;
 
               return (
@@ -201,10 +200,14 @@ export default function AssetsPage() {
                         </>
                       ) : (
                         <>
-                          {t.buy}: {formatVnd(pricePerDisplayUnit)} / {unitLabel}
+                          {t.buy}: {formatVnd(pricePerDisplayUnit)} /{" "}
+                          {unitLabel}
                         </>
                       )}
-                      <span className="text-[10px] text-[var(--text-muted)]"> · {r.code}</span>
+                      <span className="text-[10px] text-[var(--text-muted)]">
+                        {" "}
+                        · {r.code}
+                      </span>
                     </div>
                   </div>
 
@@ -225,7 +228,9 @@ export default function AssetsPage() {
                       <div className="text-base font-bold font-mono text-[var(--text-primary)]">
                         {formatQty(qtyDisplay)}
                       </div>
-                      <div className="text-[11px] text-[var(--text-muted)]">{unitLabel}</div>
+                      <div className="text-[11px] text-[var(--text-muted)]">
+                        {unitLabel}
+                      </div>
                     </div>
 
                     <Button
@@ -255,7 +260,9 @@ export default function AssetsPage() {
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-3 rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] p-4">
           <div>
-            <div className="text-xs text-[var(--text-muted)]">{t.assetsTotalLabel}</div>
+            <div className="text-xs text-[var(--text-muted)]">
+              {t.assetsTotalLabel}
+            </div>
             <div className="text-lg font-bold font-mono text-[var(--text-primary)] mt-1">
               {totalDisplay}
             </div>
@@ -291,4 +298,3 @@ export default function AssetsPage() {
     </div>
   );
 }
-

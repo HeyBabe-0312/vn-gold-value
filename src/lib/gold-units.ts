@@ -1,3 +1,5 @@
+import type { VnLocale } from "@/lib/vn-setting";
+
 /** Vàng VN: 1 lượng = 10 chỉ (quy ước hiển thị). API trả giá theo VND/lượng. */
 export type GoldWeightUnit = "luong" | "chi";
 
@@ -20,8 +22,7 @@ export function vndPerOzSpotToVndDisplayUnit(
   vndPerOz: number,
   unit: GoldWeightUnit,
 ): number {
-  const vndPerLuong =
-    vndPerOz * (GRAMS_PER_LUONG_VN / GRAMS_PER_TROY_OZ);
+  const vndPerLuong = vndPerOz * (GRAMS_PER_LUONG_VN / GRAMS_PER_TROY_OZ);
   return unit === "chi" ? vndPerLuong / CHI_PER_LUONG : vndPerLuong;
 }
 
@@ -45,14 +46,19 @@ export function formatWorldGoldVndByUnit(
   vndInUnit: number,
   currency: "VND" | "USD",
   unit: GoldWeightUnit,
-  language: "vi" | "en",
+  language: VnLocale,
+  usdRate: number = DISPLAY_USD_VND_RATE,
 ): string {
   const sep = /\B(?=(\d{3})+(?!\d))/g;
+  const unitJp = unit === "luong" ? "両" : "銭";
   if (currency === "USD") {
-    const usd = vndInUnit / DISPLAY_USD_VND_RATE;
+    const usd = vndInUnit / usdRate;
     const s = `~$${usd.toFixed(0).replace(sep, ",")}`;
     if (language === "vi") {
       return `${s}/${unit === "luong" ? "lượng" : "chỉ"}`;
+    }
+    if (language === "jp") {
+      return `${s}/${unitJp}`;
     }
     return `${s}/${unit === "luong" ? "tael" : "mace"}`;
   }
@@ -61,6 +67,12 @@ export function formatWorldGoldVndByUnit(
       return `~${(vndInUnit / 1_000_000_000).toFixed(2)} tỷ VND/${unit === "luong" ? "lượng" : "chỉ"}`;
     }
     return `~${(vndInUnit / 1_000_000).toFixed(2)} triệu VND/${unit === "luong" ? "lượng" : "chỉ"}`;
+  }
+  if (language === "jp") {
+    if (vndInUnit >= 100_000_000) {
+      return `~${(vndInUnit / 100_000_000).toFixed(2)}億VND/${unitJp}`;
+    }
+    return `~${(vndInUnit / 1_000_000).toFixed(2)}百万VND/${unitJp}`;
   }
   if (vndInUnit >= 1_000_000_000) {
     return `~${(vndInUnit / 1_000_000_000).toFixed(2)}B VND/${unit === "luong" ? "tael" : "mace"}`;

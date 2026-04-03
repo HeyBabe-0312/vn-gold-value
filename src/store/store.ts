@@ -1,9 +1,11 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { goldPricesReducer } from "./goldPricesSlice";
+import { exchangeRatesReducer } from "./exchangeRatesSlice";
 
 export const store = configureStore({
   reducer: {
     goldPrices: goldPricesReducer,
+    exchangeRates: exchangeRatesReducer,
   },
 });
 

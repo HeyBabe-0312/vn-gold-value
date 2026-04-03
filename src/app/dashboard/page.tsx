@@ -32,15 +32,18 @@ export default function DashboardPage() {
     }, 0);
   }, []);
 
-  const sjcPrice = currency === "USD"
-    ? `$${(120_500_000 / DISPLAY_USD_VND_RATE).toFixed(0)}`
-    : "120.5M VND";
+  const sjcPrice =
+    currency === "USD"
+      ? `$${(120_500_000 / DISPLAY_USD_VND_RATE).toFixed(0)}`
+      : "120.5M VND";
 
   return (
     <div className="flex flex-col gap-6 p-4 md:p-6 pb-24 md:pb-6">
       {/* Page title */}
       <div>
-        <h1 className="text-xl font-bold text-[var(--text-primary)]">{t.dashboard}</h1>
+        <h1 className="text-xl font-bold text-[var(--text-primary)]">
+          {t.dashboard}
+        </h1>
         <p className="text-sm text-[var(--text-muted)] mt-0.5">
           {t.realtime}
           {dateLine ? ` · ${dateLine}` : ""}
@@ -103,16 +106,45 @@ export default function DashboardPage() {
           </h3>
           <div className="space-y-3">
             {[
-              { label: "Spot Gold (XAU)", price: "$3,124.50", change: "+0.40%", up: true },
-              { label: "Gold Futures", price: "$3,132.80", change: "+0.35%", up: true },
-              { label: "Silver (XAG)", price: "$34.21", change: "-0.12%", up: false },
-              { label: "Platinum", price: "$982.50", change: "+0.18%", up: true },
+              {
+                label: "Spot Gold (XAU)",
+                price: "$3,124.50",
+                change: "+0.40%",
+                up: true,
+              },
+              {
+                label: "Gold Futures",
+                price: "$3,132.80",
+                change: "+0.35%",
+                up: true,
+              },
+              {
+                label: "Silver (XAG)",
+                price: "$34.21",
+                change: "-0.12%",
+                up: false,
+              },
+              {
+                label: "Platinum",
+                price: "$982.50",
+                change: "+0.18%",
+                up: true,
+              },
             ].map((item) => (
-              <div key={item.label} className="flex items-center justify-between py-2 border-b border-[var(--border-subtle)] last:border-0">
-                <span className="text-sm text-[var(--text-secondary)]">{item.label}</span>
+              <div
+                key={item.label}
+                className="flex items-center justify-between py-2 border-b border-[var(--border-subtle)] last:border-0"
+              >
+                <span className="text-sm text-[var(--text-secondary)]">
+                  {item.label}
+                </span>
                 <div className="flex items-center gap-3">
-                  <span className="font-mono text-sm font-semibold text-[var(--text-primary)]">{item.price}</span>
-                  <span className={`font-mono text-xs font-medium w-16 text-right ${item.up ? "text-[#10B981]" : "text-[#EF4444]"}`}>
+                  <span className="font-mono text-sm font-semibold text-[var(--text-primary)]">
+                    {item.price}
+                  </span>
+                  <span
+                    className={`font-mono text-xs font-medium w-16 text-right ${item.up ? "text-[#10B981]" : "text-[#EF4444]"}`}
+                  >
                     {item.change}
                   </span>
                 </div>

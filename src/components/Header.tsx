@@ -1,7 +1,7 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Sun, Moon, Globe, TrendingUp, TrendingDown, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,28 +11,44 @@ import {
   WORLD_GOLD_CHANGE_PERCENT,
 } from "@/lib/mock-data";
 import {
-  DISPLAY_USD_VND_RATE,
   formatWorldGoldVndByUnit,
   usdOzToApproxVndPerOz,
   vndPerOzSpotToVndDisplayUnit,
 } from "@/lib/gold-units";
 import { cn, formatNumber } from "@/lib/utils";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import type { VnLocale } from "@/lib/vn-setting";
+import { intlLocaleForApp } from "@/lib/vn-setting";
+import { useAppSelector, useUsdVndRate } from "@/store/hooks";
 
 const CURRENCIES = ["VND", "USD"] as const;
-const LANGUAGES = [
+
+const LANGUAGES: { code: VnLocale; label: string; flag: string }[] = [
   { code: "vi", label: "Tiếng Việt", flag: "🇻🇳" },
   { code: "en", label: "English", flag: "🇺🇸" },
-] as const;
+  { code: "jp", label: "日本語", flag: "🇯🇵" },
+];
 
 export function Header() {
   const { theme, setTheme } = useTheme();
   const { language, setLanguage, currency, setCurrency, goldUnit, t } =
     useApp();
-  const worldVndOz = usdOzToApproxVndPerOz(WORLD_GOLD_PRICE_USD);
-  const worldVndByUnit = vndPerOzSpotToVndDisplayUnit(worldVndOz, goldUnit);
+  const worldGold = useAppSelector((s) => s.goldPrices.worldGold);
+  const goldStatus = useAppSelector((s) => s.goldPrices.status);
+  const usdVndRate = useUsdVndRate();
+
   const [mounted, setMounted] = useState(false);
   const [currentTime, setCurrentTime] = useState("");
+
+  const spotUsdOz = worldGold?.buy ?? null;
+  const changePercent =
+    worldGold != null ? worldGold.changePercent : WORLD_GOLD_CHANGE_PERCENT;
+  const showLiveSpot = spotUsdOz != null;
+  const displayUsdOz = showLiveSpot ? spotUsdOz : WORLD_GOLD_PRICE_USD;
+  const worldVndOz = usdOzToApproxVndPerOz(displayUsdOz, usdVndRate);
+  const worldVndByUnit = vndPerOzSpotToVndDisplayUnit(worldVndOz, goldUnit);
+  const loadingSpot =
+    !showLiveSpot && (goldStatus === "idle" || goldStatus === "loading");
 
   useEffect(() => {
     // Defer to avoid lint rule "set-state-in-effect".
@@ -52,11 +68,18 @@ export function Header() {
     return () => clearInterval(interval);
   }, []);
 
-  const isUp = WORLD_GOLD_CHANGE_PERCENT >= 0;
+  const isUp = changePercent >= 0;
+
+  const changeLabel = useMemo(() => {
+    const abs = Math.abs(changePercent);
+    const decimals = abs >= 10 ? 1 : 2;
+    const s = changePercent.toFixed(decimals);
+    return isUp ? `+${s}` : s;
+  }, [changePercent, isUp]);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-[var(--border-default)] bg-[var(--bg-primary)]/95 backdrop-blur-md">
-      <div className="flex h-14 items-center justify-between px-4 md:px-6">
+      <div className="flex h-16 items-center justify-between px-4 md:px-6">
         {/* Logo */}
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#F59E0B] shadow-sm">
@@ -66,10 +89,10 @@ export function Header() {
           </div>
           <div className="hidden sm:block">
             <span className="text-sm font-semibold text-[var(--text-primary)]">
-              VN Gold
+              Gold Prices
             </span>
             <span className="ml-1 text-sm font-light text-[var(--text-muted)]">
-              Value
+              - Vietnam
             </span>
           </div>
         </div>
@@ -91,26 +114,40 @@ export function Header() {
                     XAU/USD
                   </span>
                   <span className="text-sm font-semibold font-mono text-[var(--text-primary)]">
-                    ${formatNumber(WORLD_GOLD_PRICE_USD)}
-                    <span className="text-[10px] font-normal text-[var(--text-muted)] ml-1">
-                      /oz
-                    </span>
+                    {loadingSpot ? (
+                      <span className="text-[var(--text-muted)]">—</span>
+                    ) : (
+                      <>
+                        ${formatNumber(displayUsdOz)}
+                        <span className="text-[10px] font-normal text-[var(--text-muted)] ml-1">
+                          /oz
+                        </span>
+                      </>
+                    )}
                   </span>
                 </div>
                 <span className="text-[10px] font-mono text-[var(--text-muted)] pl-0 sm:pl-[52px] max-w-[220px]">
-                  {formatWorldGoldVndByUnit(
-                    worldVndByUnit,
-                    currency,
-                    goldUnit,
-                    language,
+                  {loadingSpot ? (
+                    "—"
+                  ) : (
+                    <>
+                      {formatWorldGoldVndByUnit(
+                        worldVndByUnit,
+                        currency,
+                        goldUnit,
+                        language,
+                        usdVndRate,
+                      )}
+                      <span className="text-[var(--text-muted)]/80">
+                        {" "}
+                        ·{" "}
+                        {Math.round(usdVndRate).toLocaleString(
+                          intlLocaleForApp(language),
+                        )}{" "}
+                        ₫/USD
+                      </span>
+                    </>
                   )}
-                  <span className="text-[var(--text-muted)]/80">
-                    {" "}
-                    · {DISPLAY_USD_VND_RATE.toLocaleString(
-                      language === "vi" ? "vi-VN" : "en-US",
-                    )}{" "}
-                    ₫/USD
-                  </span>
                 </span>
               </div>
               <span
@@ -119,13 +156,18 @@ export function Header() {
                   isUp ? "text-[#10B981]" : "text-[#EF4444]",
                 )}
               >
-                {isUp ? (
-                  <TrendingUp className="h-3 w-3" />
+                {loadingSpot ? (
+                  <span className="text-[var(--text-muted)]">—</span>
                 ) : (
-                  <TrendingDown className="h-3 w-3" />
+                  <>
+                    {isUp ? (
+                      <TrendingUp className="h-3 w-3" />
+                    ) : (
+                      <TrendingDown className="h-3 w-3" />
+                    )}
+                    {changeLabel}%
+                  </>
                 )}
-                {isUp ? "+" : ""}
-                {WORLD_GOLD_CHANGE_PERCENT}%
               </span>
             </div>
           </div>
@@ -197,7 +239,7 @@ export function Header() {
                         ? "bg-[#F59E0B]/10 text-[#F59E0B] font-medium"
                         : "text-[var(--text-secondary)] hover:bg-[var(--bg-card-hover)] hover:text-[var(--text-primary)]",
                     )}
-                    onSelect={() => setLanguage(lang.code as "vi" | "en")}
+                    onSelect={() => setLanguage(lang.code)}
                   >
                     <span className="text-base">{lang.flag}</span>
                     {lang.label}

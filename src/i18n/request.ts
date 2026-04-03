@@ -1,9 +1,9 @@
 import { getRequestConfig } from "next-intl/server";
 import { cookies } from "next/headers";
 
-type Locale = "vi" | "en";
+import type { VnLocale } from "@/lib/vn-setting";
 
-async function getLocaleFromCookie(): Promise<Locale> {
+async function getLocaleFromCookie(): Promise<VnLocale> {
   const jar = await cookies();
   const raw = jar.get("vn-gold-setting")?.value;
   if (!raw) return "vi";
@@ -19,7 +19,11 @@ async function getLocaleFromCookie(): Promise<Locale> {
 
   try {
     const parsed = JSON.parse(decoded) as { locale?: string } | null;
-    if (parsed?.locale === "en" || parsed?.locale === "vi")
+    if (
+      parsed?.locale === "en" ||
+      parsed?.locale === "vi" ||
+      parsed?.locale === "jp"
+    )
       return parsed.locale;
   } catch {
     /* ignore */

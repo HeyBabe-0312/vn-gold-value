@@ -2,7 +2,7 @@ import createMiddleware from "next-intl/middleware";
 
 // No locale prefix in URL. Locale is read from cookie by next-intl.
 export default createMiddleware({
-  locales: ["vi", "en"],
+  locales: ["vi", "en", "jp"],
   defaultLocale: "vi",
   localePrefix: "never",
 });

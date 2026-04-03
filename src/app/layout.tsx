@@ -3,6 +3,7 @@ import { Be_Vietnam_Pro, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { AppProvider } from "@/providers/AppProvider";
 import { ReduxProvider } from "@/providers/ReduxProvider";
+import { InitFetchData } from "@/providers/InitFetchData";
 import { Header } from "@/components/Header";
 import { Sidebar, MobileNav } from "@/components/Sidebar";
 import { NextIntlClientProvider } from "next-intl";
@@ -21,9 +22,9 @@ const vnMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "VN Gold Value — Giá vàng & Ngoại tệ",
+  title: "VN Gold Prices - Giá vàng & Ngoại tệ",
   description:
-    "Theo dõi giá vàng SJC, DOJI, PNJ và tỷ giá ngoại tệ theo thời gian thực.",
+    "Track SJC, DOJI, PNJ gold prices and foreign exchange rates in near real time.",
   icons: {
     icon: "/favicon.ico",
   },
@@ -46,6 +47,7 @@ export default async function RootLayout({
       <body className="h-full antialiased">
         <NextIntlClientProvider locale={locale} messages={messages}>
           <ReduxProvider>
+            <InitFetchData />
             <AppProvider>
               <div className="flex h-full flex-col">
                 <Header />

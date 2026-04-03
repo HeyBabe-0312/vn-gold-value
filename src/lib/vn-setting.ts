@@ -1,4 +1,4 @@
-export type VnLocale = "vi" | "en";
+export type VnLocale = "vi" | "en" | "jp";
 export type VnCurrency = "VND" | "USD";
 export type VnWeightUnit = "luong" | "chi";
 
@@ -31,7 +31,9 @@ export function parseVnSetting(
     const parsed = JSON.parse(decoded) as Partial<VnSetting> | null;
     if (!parsed || typeof parsed !== "object") return null;
     const locale =
-      parsed.locale === "en" || parsed.locale === "vi"
+      parsed.locale === "en" ||
+      parsed.locale === "vi" ||
+      parsed.locale === "jp"
         ? parsed.locale
         : defaultVnSetting.locale;
     const currency =
@@ -66,4 +68,16 @@ export function writeVnSettingCookie(setting: VnSetting) {
   const value = encodeURIComponent(JSON.stringify(setting));
   // 1 year
   document.cookie = `${VN_SETTING_KEY}=${value}; path=/; max-age=${60 * 60 * 24 * 365}`;
+}
+
+/** BCP 47 locale for `Intl` / `toLocaleString`. */
+export function intlLocaleForApp(locale: VnLocale): string {
+  switch (locale) {
+    case "vi":
+      return "vi-VN";
+    case "jp":
+      return "ja-JP";
+    default:
+      return "en-US";
+  }
 }

@@ -14,12 +14,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useApp } from "@/providers/AppProvider";
+import { intlLocaleForApp } from "@/lib/vn-setting";
 import { cn } from "@/lib/utils";
 import { LineChart, Line, ResponsiveContainer, Tooltip } from "recharts";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { useAppDispatch, useAppSelector, useUsdVndRate } from "@/store/hooks";
 import { fetchGoldPrices } from "@/store/goldPricesSlice";
 import {
-  DISPLAY_USD_VND_RATE,
   GRAMS_PER_LUONG_VN,
   GRAMS_PER_TROY_OZ,
   vndLuongToDisplayAmount,
@@ -27,8 +27,6 @@ import {
   vndPerOzSpotToVndDisplayUnit,
   formatWorldGoldVndByUnit,
 } from "@/lib/gold-units";
-
-const AUTO_REFRESH_TICK_MS = 60 * 1000;
 
 function Sparkline({ isUp }: { isUp: boolean }) {
   const [mounted, setMounted] = useState(false);
@@ -97,44 +95,40 @@ export default function GoldPricePage() {
   const error = goldState.error;
   const meta = goldState.meta;
 
+  const usdVndRate = useUsdVndRate();
   const [sortField, setSortField] = useState<SortField>("sell");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [isRefreshing, setIsRefreshing] = useState(false);
-  useEffect(() => {
-    // Initial load + auto refresh when data becomes stale (> 10 minutes).
-    dispatch(fetchGoldPrices({ force: false }));
-    const id = setInterval(() => {
-      void dispatch(fetchGoldPrices({ force: false }));
-    }, AUTO_REFRESH_TICK_MS);
-    return () => clearInterval(id);
-  }, [dispatch]);
 
   const updateLabel = useMemo(() => {
     if (meta.time && meta.date) return `${meta.time} · ${meta.date}`;
     if (meta.timestamp) {
-      return new Date(meta.timestamp * 1000).toLocaleString("vi-VN", {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      });
+      return new Date(meta.timestamp * 1000).toLocaleString(
+        intlLocaleForApp(language),
+        {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        },
+      );
     }
     return null;
-  }, [meta]);
+  }, [meta, language]);
 
   const worldVndDisplay = useMemo(() => {
     if (!world) return null;
-    const vndOz = usdOzToApproxVndPerOz(world.buy);
+    const vndOz = usdOzToApproxVndPerOz(world.buy, usdVndRate);
     return vndPerOzSpotToVndDisplayUnit(vndOz, goldUnit);
-  }, [world, goldUnit]);
+  }, [world, goldUnit, usdVndRate]);
 
   /** `vndPerLuong`: giá gốc từ API (VND mỗi lượng). */
   const formatDomestic = (vndPerLuong: number) => {
     const v = vndLuongToDisplayAmount(vndPerLuong, goldUnit);
     if (currency === "USD") {
-      return `$${(v / DISPLAY_USD_VND_RATE).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+      return `$${(v / usdVndRate).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
     }
     return `${(v / 1_000_000).toFixed(2)}M`;
   };
@@ -153,14 +147,16 @@ export default function GoldPricePage() {
   const sorted = useMemo(() => {
     const list = [...rows];
     const mul = sortDir === "asc" ? 1 : -1;
+    const collator = intlLocaleForApp(language);
     list.sort((a, b) => {
-      if (sortField === "type") return a.name.localeCompare(b.name, "vi") * mul;
+      if (sortField === "type")
+        return a.name.localeCompare(b.name, collator) * mul;
       if (sortField === "buy") return (a.buy - b.buy) * mul;
       if (sortField === "sell") return (a.sell - b.sell) * mul;
       return (a.changePercent - b.changePercent) * mul;
     });
     return list;
-  }, [rows, sortField, sortDir]);
+  }, [rows, sortField, sortDir, language]);
 
   const handleRefresh = () => {
     setIsRefreshing(true);
@@ -201,11 +197,10 @@ export default function GoldPricePage() {
           <p className="text-[11px] text-[var(--text-muted)] mt-1 max-w-md">
             {currency === "USD" && (
               <>
-                Quy đổi USD ước tính (1 USD ≈{" "}
-                {DISPLAY_USD_VND_RATE.toLocaleString(
-                  language === "vi" ? "vi-VN" : "en-US",
-                )}{" "}
-                VND).
+                {t.goldPriceUsdDisclaimer.replace(
+                  "{rate}",
+                  Math.round(usdVndRate).toLocaleString(intlLocaleForApp(language)),
+                )}
               </>
             )}
           </p>
@@ -213,7 +208,7 @@ export default function GoldPricePage() {
         <div className="flex flex-col items-end gap-2 shrink-0 sm:flex-row sm:items-center">
           <Badge variant="live">
             <span className="pulse-dot h-1.5 w-1.5 rounded-full bg-[#10B981]" />
-            API
+            {t.api}
           </Badge>
           <div
             className="flex rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] p-0.5"
@@ -271,13 +266,13 @@ export default function GoldPricePage() {
           <CardContent className="p-4 flex flex-wrap items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-                Vàng thế giới (XAU/USD)
+                {t.worldGoldCardTitle}
               </p>
               <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
                 <p className="text-lg font-bold font-mono text-[var(--text-primary)]">
                   {formatUsdOz(world.buy)}
                   <span className="text-sm font-normal text-[var(--text-muted)] ml-1.5">
-                    / oz
+                    {t.goldPricePerOzSuffix}
                   </span>
                 </p>
                 {worldVndDisplay != null && (
@@ -287,28 +282,24 @@ export default function GoldPricePage() {
                       currency,
                       goldUnit,
                       language,
+                      usdVndRate,
                     )}
                   </p>
                 )}
               </div>
               <p className="text-[11px] text-[var(--text-muted)] mt-1 leading-relaxed">
-                {language === "vi" ? (
-                  <>
-                    VND: lấy VND/oz (USD/oz ×{" "}
-                    {DISPLAY_USD_VND_RATE.toLocaleString("vi-VN")}), rồi × (
-                    {GRAMS_PER_LUONG_VN}g ÷ {GRAMS_PER_TROY_OZ.toFixed(4)}g) →
-                    VND/lượng
-                    {goldUnit === "chi" ? "; ÷ 10 → VND/chỉ" : ""}. Ước lượng
-                    mang tính chất tham khảo.
-                  </>
-                ) : (
-                  <>
-                    VND: VND/oz (USD/oz × rate), then × ({GRAMS_PER_LUONG_VN}g ÷{" "}
-                    {GRAMS_PER_TROY_OZ.toFixed(4)}g) → per tael
-                    {goldUnit === "chi" ? "; ÷ 10 → per mace" : ""}. Approximate
-                    spot equivalent.
-                  </>
-                )}
+                {t.goldPriceWorldVndFormula
+                  .replace(
+                    "{rate}",
+                    Math.round(usdVndRate).toLocaleString(intlLocaleForApp(language)),
+                  )
+                  .replace("{gramsLuong}", String(GRAMS_PER_LUONG_VN))
+                  .replace("{gramsOz}", GRAMS_PER_TROY_OZ.toFixed(4))
+                  .replace(
+                    "{chiSuffix}",
+                    goldUnit === "chi" ? t.goldPriceWorldVndChiSuffix : "",
+                  )
+                  .replace("{approxNote}", t.goldPriceWorldVndApprox)}
               </p>
             </div>
             <div
@@ -335,7 +326,7 @@ export default function GoldPricePage() {
             <Card className="hover:bg-[var(--bg-card-hover)] transition-colors cursor-default">
               <CardContent className="p-4">
                 <p className="text-xs text-[var(--text-muted)] mb-1 uppercase tracking-wide">
-                  {refSjc.code} · Mua
+                  {refSjc.code} · {t.buy}
                 </p>
                 <p className="text-lg font-bold font-mono text-[var(--text-primary)]">
                   {formatDomestic(refSjc.buy)}
@@ -348,20 +339,20 @@ export default function GoldPricePage() {
             <Card className="hover:bg-[var(--bg-card-hover)] transition-colors cursor-default">
               <CardContent className="p-4">
                 <p className="text-xs text-[var(--text-muted)] mb-1 uppercase tracking-wide">
-                  {refSjc.code} · Bán
+                  {refSjc.code} · {t.sell}
                 </p>
                 <p className="text-lg font-bold font-mono text-[var(--text-primary)]">
                   {formatDomestic(refSjc.sell)}
                 </p>
                 <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                  tham chiếu · {unitSuffix}
+                  {t.reference} · {unitSuffix}
                 </p>
               </CardContent>
             </Card>
             <Card className="hover:bg-[var(--bg-card-hover)] transition-colors cursor-default">
               <CardContent className="p-4">
                 <p className="text-xs text-[var(--text-muted)] mb-1 uppercase tracking-wide">
-                  Chênh lệch
+                  {t.spreadLabel}
                 </p>
                 <p
                   className={cn(
@@ -374,14 +365,14 @@ export default function GoldPricePage() {
                   {spread != null ? formatDomestic(spread) : "—"}
                 </p>
                 <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                  spread · {unitSuffix}
+                  {t.spreadLabel} · {unitSuffix}
                 </p>
               </CardContent>
             </Card>
             <Card className="hover:bg-[var(--bg-card-hover)] transition-colors cursor-default">
               <CardContent className="p-4">
                 <p className="text-xs text-[var(--text-muted)] mb-1 uppercase tracking-wide">
-                  Biến động (bán)
+                  {t.volatilitySell}
                 </p>
                 <p
                   className={cn(
@@ -395,7 +386,7 @@ export default function GoldPricePage() {
                   {refSjc.changePercent.toFixed(2)}%
                 </p>
                 <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                  so với phiên trước
+                  {t.vsPrevSession}
                 </p>
               </CardContent>
             </Card>
@@ -404,7 +395,7 @@ export default function GoldPricePage() {
           !loading &&
           !error && (
             <p className="text-sm text-[var(--text-muted)] col-span-full">
-              Chưa có dữ liệu tham chiếu SJC.
+              {t.goldPriceNoSjcRef}
             </p>
           )
         )}
@@ -421,7 +412,7 @@ export default function GoldPricePage() {
                     onClick={() => handleSort("type")}
                     className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
                   >
-                    Nguồn / loại {renderSortIcon("type")}
+                    {t.sourceType} {renderSortIcon("type")}
                   </button>
                 </th>
                 <th className="text-right py-3 px-4 hidden md:table-cell">
@@ -432,7 +423,7 @@ export default function GoldPricePage() {
                   >
                     <span className="flex flex-col items-end gap-0.5">
                       <span className="flex items-center gap-1">
-                        Mua vào {renderSortIcon("buy")}
+                        {t.goldPriceColBuyIn} {renderSortIcon("buy")}
                       </span>
                       <span className="text-[10px] font-normal normal-case text-[var(--text-muted)]">
                         ({unitSuffix})
@@ -448,7 +439,7 @@ export default function GoldPricePage() {
                   >
                     <span className="flex flex-col items-end gap-0.5">
                       <span className="flex items-center gap-1">
-                        Bán ra {renderSortIcon("sell")}
+                        {t.goldPriceColSellOut} {renderSortIcon("sell")}
                       </span>
                       <span className="text-[10px] font-normal normal-case text-[var(--text-muted)]">
                         ({unitSuffix})
@@ -462,7 +453,7 @@ export default function GoldPricePage() {
                     onClick={() => handleSort("change")}
                     className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors cursor-pointer ml-auto"
                   >
-                    Thay đổi {renderSortIcon("change")}
+                    {t.change} {renderSortIcon("change")}
                   </button>
                 </th>
                 <th className="text-center py-3 px-4 hidden lg:table-cell">
@@ -560,7 +551,7 @@ export default function GoldPricePage() {
       <div className="flex items-start gap-2 rounded-xl border border-[#F59E0B]/20 bg-[#F59E0B]/5 p-4">
         <Info className="h-4 w-4 text-[#F59E0B] mt-0.5 shrink-0" />
         <p className="text-xs text-[var(--text-muted)] leading-relaxed">
-          Dữ liệu giá vàng trong nước lấy từ{" "}
+          {t.goldPriceDataFooterBefore}
           <a
             href="https://www.vang.today/vi/api"
             target="_blank"
@@ -568,10 +559,8 @@ export default function GoldPricePage() {
             className="text-[#F59E0B] underline-offset-2 hover:underline cursor-pointer"
           >
             vang.today
-          </a>{" "}
-          (cập nhật khoảng 5 phút/lần, VND/lượng). Chế độ &quot;Chỉ&quot;: chia
-          giá lượng cho 10. Giá thực tế tại quầy có thể khác. Cột &quot;Xu
-          hướng&quot; chỉ minh họa, không phải lịch sử API.
+          </a>
+          {t.goldPriceDataFooterAfter}
         </p>
       </div>
     </div>

@@ -71,6 +71,23 @@
   "amountUnit": "lượng",
   "tradeVolumeUnit": "lượng giao dịch",
   "currencyRatesTitle": "Tỷ giá ngoại tệ (VND)",
-  "assetsVndPerUnit": "VND/lượng"
-}
+  "assetsVndPerUnit": "VND/lượng",
 
+  "refresh": "Làm mới",
+  "currencyNameVnd": "Việt Nam Đồng",
+  "converterSubtitle": "Chuyển đổi nhanh các loại tiền tệ",
+  "converterLastUpdatedUtc": "Cập nhật gần nhất (UTC)",
+  "converterEnvKeyHint": "Thêm EXCHANGE_RATE_API_KEY vào .env.local và khởi động lại dev server.",
+  "converterLoadingRates": "Đang tải tỷ giá…",
+
+  "goldPriceUsdDisclaimer": "Quy đổi USD (1 USD ≈ {rate} VND).",
+  "goldPriceWorldVndFormula": "VND: USD/oz × {rate} ₫/USD × ({gramsLuong}g ÷ {gramsOz}g) → VND/lượng{chiSuffix}. {approxNote}",
+  "goldPriceWorldVndChiSuffix": "; ÷ 10 → VND/chỉ",
+  "goldPriceWorldVndApprox": "Giá mang tính chất tham khảo.",
+  "goldPriceColBuyIn": "Mua vào",
+  "goldPriceColSellOut": "Bán ra",
+  "goldPriceNoSjcRef": "Chưa có dữ liệu tham chiếu SJC.",
+  "goldPriceDataFooterBefore": "Dữ liệu giá vàng trong nước lấy từ ",
+  "goldPriceDataFooterAfter": " (cập nhật khoảng 5 phút/lần, VND/lượng). Chế độ \"Chỉ\": chia giá lượng cho 10. Giá thực tế tại quầy có thể khác. Cột \"Xu hướng\" chỉ minh họa, không phải lịch sử API.",
+  "goldPricePerOzSuffix": "/ oz"
+}

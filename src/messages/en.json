@@ -71,6 +71,23 @@
   "amountUnit": "tael",
   "tradeVolumeUnit": "trades",
   "currencyRatesTitle": "FX rates (VND)",
-  "assetsVndPerUnit": "VND/tael"
-}
+  "assetsVndPerUnit": "VND/tael",
 
+  "refresh": "Refresh",
+  "currencyNameVnd": "Vietnamese Dong",
+  "converterSubtitle": "Quick currency conversion",
+  "converterLastUpdatedUtc": "Last update (UTC)",
+  "converterEnvKeyHint": "Add EXCHANGE_RATE_API_KEY to .env.local and restart the dev server.",
+  "converterLoadingRates": "Loading rates…",
+
+  "goldPriceUsdDisclaimer": "USD conversion (1 USD ≈ {rate} VND).",
+  "goldPriceWorldVndFormula": "VND: USD/oz × {rate} ₫/USD × ({gramsLuong}g ÷ {gramsOz}g) → per tael{chiSuffix}. {approxNote}",
+  "goldPriceWorldVndChiSuffix": "; ÷ 10 → per mace",
+  "goldPriceWorldVndApprox": "Approximate spot equivalent.",
+  "goldPriceColBuyIn": "Buy (bid)",
+  "goldPriceColSellOut": "Sell (ask)",
+  "goldPriceNoSjcRef": "No SJC reference data yet.",
+  "goldPriceDataFooterBefore": "Domestic gold prices are sourced from ",
+  "goldPriceDataFooterAfter": " (updates about every 5 min, VND per tael). \"Mace\" mode: tael price ÷ 10. Counter prices may differ. The \"Trend\" column is illustrative only, not API history.",
+  "goldPricePerOzSuffix": "/ oz"
+}

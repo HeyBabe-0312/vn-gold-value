@@ -3,11 +3,12 @@
 import React, { createContext, useContext } from "react";
 import { ThemeProvider } from "next-themes";
 import { useMessages } from "next-intl";
+import type { VnLocale } from "@/lib/vn-setting";
 import { VnSettingProvider, useVnSetting } from "@/providers/VnSettingProvider";
 
 interface AppContextType {
-  language: "vi" | "en";
-  setLanguage: (lang: "vi" | "en") => void;
+  language: VnLocale;
+  setLanguage: (lang: VnLocale) => void;
   currency: "VND" | "USD";
   setCurrency: (cur: "VND" | "USD") => void;
   goldUnit: "luong" | "chi";
