@@ -47,7 +47,7 @@ export function VnSettingProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!hydrated) return;
     writeVnSettingToLocalStorage(setting);
-    // Cookie is used by next-intl middleware + server request config
+    // Cookie is read by i18n/request.ts (getLocaleFromCookie) on each server render
     writeVnSettingCookie(setting);
   }, [setting, hydrated]);
 
