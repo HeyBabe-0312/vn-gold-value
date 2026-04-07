@@ -1,14 +1,3 @@
-export type GoldType = "SJC" | "DOJI" | "PNJ" | "24K" | "18K";
-
-export interface GoldPrice {
-  type: GoldType;
-  buy: number;
-  sell: number;
-  change: number;
-  changePercent: number;
-  updatedAt: string;
-}
-
 export interface ChartDataPoint {
   time: string;
   price: number;
@@ -22,49 +11,6 @@ export interface CurrencyRate {
   rate: number;
   change: number;
 }
-
-export const GOLD_PRICES: GoldPrice[] = [
-  {
-    type: "SJC",
-    buy: 118_500_000,
-    sell: 120_500_000,
-    change: 500_000,
-    changePercent: 0.42,
-    updatedAt: "10:15",
-  },
-  {
-    type: "DOJI",
-    buy: 118_200_000,
-    sell: 120_200_000,
-    change: 300_000,
-    changePercent: 0.25,
-    updatedAt: "10:14",
-  },
-  {
-    type: "PNJ",
-    buy: 117_800_000,
-    sell: 119_800_000,
-    change: -200_000,
-    changePercent: -0.17,
-    updatedAt: "10:13",
-  },
-  {
-    type: "24K",
-    buy: 112_000_000,
-    sell: 114_000_000,
-    change: 400_000,
-    changePercent: 0.36,
-    updatedAt: "10:15",
-  },
-  {
-    type: "18K",
-    buy: 84_000_000,
-    sell: 86_000_000,
-    change: 250_000,
-    changePercent: 0.3,
-    updatedAt: "10:12",
-  },
-];
 
 /** Deterministic series so SSR và client khớp (không dùng Date/Math.random tại import). */
 function generateChartData(
@@ -157,7 +103,6 @@ export const TRANSLATIONS = {
     amount: "Số tiền",
     result: "Kết quả",
     exchangeRate: "Tỷ giá",
-    marketOverview: "Tổng quan thị trường",
     priceChart: "Biểu đồ giá",
     goldTypes: "Giá vàng VN",
     todayStats: "Thống kê hôm nay",
@@ -200,9 +145,6 @@ export const TRANSLATIONS = {
     noVndRecords: "Không có bản ghi VND.",
     loadingDomestic: "Đang tải giá trong nước…",
     worldGoldCardTitle: "Vàng thế giới (XAU/USD)",
-    worldGoldPricesTitle: "Giá vàng thế giới",
-    increaseLabel: "Tăng",
-    decreaseLabel: "Giảm",
     retailPrice: "Giá bán lẻ",
     today: "hôm nay",
     vsYesterday: "vs hôm qua",
@@ -230,7 +172,6 @@ export const TRANSLATIONS = {
     amount: "Amount",
     result: "Result",
     exchangeRate: "Exchange Rate",
-    marketOverview: "Market Overview",
     priceChart: "Price Chart",
     goldTypes: "Gold Types",
     todayStats: "Today's Stats",
@@ -273,9 +214,6 @@ export const TRANSLATIONS = {
     noVndRecords: "No VND records.",
     loadingDomestic: "Loading domestic prices…",
     worldGoldCardTitle: "World Gold (XAU/USD)",
-    worldGoldPricesTitle: "World gold prices",
-    increaseLabel: "Up",
-    decreaseLabel: "Down",
     retailPrice: "Retail price",
     today: "today",
     vsYesterday: "vs yesterday",

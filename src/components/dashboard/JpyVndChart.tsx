@@ -7,6 +7,7 @@ import {
   type TradingViewAdvancedChartConfig,
   TRADINGVIEW_ADVANCED_CHART_SCRIPT,
   TV_CHART_SURFACE,
+  purgeTradingViewEmbedContainer,
   resolveTradingViewTheme,
   useTradingViewChartLayoutBucket,
 } from "@/lib/tradingview-advanced-chart";
@@ -45,15 +46,19 @@ export interface JpyVndChartProps {
 export function JpyVndChart({ className, chartConfig }: JpyVndChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const layoutBucket = useTradingViewChartLayoutBucket();
-  const { resolvedTheme } = useTheme();
+  const { resolvedTheme, theme } = useTheme();
   const configKey = useMemo(
     () => JSON.stringify(chartConfig ?? {}),
     [chartConfig],
   );
 
+  const tvThemeKey = resolveTradingViewTheme(resolvedTheme);
+
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
+
+    purgeTradingViewEmbedContainer(container);
 
     const overrides = JSON.parse(
       configKey,
@@ -78,13 +83,9 @@ export function JpyVndChart({ className, chartConfig }: JpyVndChartProps) {
     container.appendChild(script);
 
     return () => {
-      script.remove();
-      const widgetHost = container.querySelector(
-        ".tradingview-widget-container__widget",
-      );
-      if (widgetHost) widgetHost.innerHTML = "";
+      purgeTradingViewEmbedContainer(container);
     };
-  }, [configKey, resolvedTheme, layoutBucket]);
+  }, [configKey, resolvedTheme, theme, layoutBucket]);
 
   return (
     <div
@@ -94,6 +95,7 @@ export function JpyVndChart({ className, chartConfig }: JpyVndChartProps) {
       )}
     >
       <div
+        key={`jpyvnd-${tvThemeKey}-${layoutBucket}`}
         ref={containerRef}
         className="tradingview-widget-container h-full w-full max-w-full"
         style={{ height: "100%", width: "100%", minHeight: 0 }}

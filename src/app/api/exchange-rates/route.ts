@@ -1,23 +1,24 @@
 import { NextResponse } from "next/server";
+import CurrencyAPI from "@everapi/currencyapi-js";
 import { EXCHANGE_API_CURRENCIES, FX_ORDER } from "@/lib/fx-currencies";
 
-const UPSTREAM = "https://api.exchangerateapi.net/v1/latest";
-
-/** Seconds — free tier: minimize upstream calls; CDN + Next cache still serve clients. */
+/** Seconds — align with CurrencyAPI plan (free tier often daily); CDN + Next cache still help. */
 const REVALIDATE_SEC = 6 * 60 * 60;
 
-interface UpstreamLatest {
-  data?: Record<string, { code?: string; value?: number }>;
+type CurrencyApiDataEntry = { code?: string; value?: number };
+
+interface LatestResponseBody {
   meta?: { last_updated_at?: string };
+  data?: Record<string, CurrencyApiDataEntry> | null;
   message?: string;
 }
 
 function buildVndPerUnit(
-  data: Record<string, { value?: number }>,
+  data: Record<string, CurrencyApiDataEntry>,
 ): Record<string, number> {
   const vndPerUsd = data.VND?.value;
   if (vndPerUsd == null || !Number.isFinite(vndPerUsd) || vndPerUsd <= 0) {
-    throw new Error("Invalid VND rate in upstream response");
+    throw new Error("Invalid or missing VND rate in CurrencyAPI response");
   }
   const out: Record<string, number> = { USD: vndPerUsd };
   for (const code of FX_ORDER) {
@@ -31,48 +32,43 @@ function buildVndPerUnit(
   return out;
 }
 
+function getApiKey(): string | undefined {
+  return process.env.CURRENCY_API_KEY?.trim() || undefined;
+}
+
 export async function GET() {
-  const apikey = process.env.EXCHANGE_RATE_API_KEY;
-  if (!apikey) {
+  const apiKey = getApiKey();
+  if (!apiKey) {
     return NextResponse.json(
-      { success: false, error: "Server missing EXCHANGE_RATE_API_KEY" },
+      {
+        success: false,
+        error: "Server missing CURRENCY_API_KEY",
+      },
       { status: 500 },
     );
   }
 
-  const url = `${UPSTREAM}?base=USD&currencies=${EXCHANGE_API_CURRENCIES}`;
-
   try {
-    const res = await fetch(url, {
-      headers: { apikey },
-      next: { revalidate: REVALIDATE_SEC },
-    });
+    const client = new CurrencyAPI(apiKey);
+    const json = (await client.latest({
+      base_currency: "USD",
+      currencies: EXCHANGE_API_CURRENCIES,
+    })) as LatestResponseBody;
 
-    if (!res.ok) {
-      return NextResponse.json(
-        { success: false, error: `Upstream ${res.status}` },
-        { status: 502 },
-      );
-    }
-
-    const json = (await res.json()) as UpstreamLatest;
-    const data = json.data;
-    if (!data || typeof data !== "object") {
+    if (!json.data || typeof json.data !== "object") {
       const upstreamMsg =
         typeof json.message === "string" && json.message.trim()
           ? json.message.trim()
-          : "Invalid upstream payload";
+          : "Invalid CurrencyAPI response";
       const quotaLike =
-        /quota|monthly requests|upgrade your plan|subscription/i.test(
-          upstreamMsg,
-        );
+        /quota|limit|upgrade|plan|subscription|401|unauthor/i.test(upstreamMsg);
       return NextResponse.json(
         { success: false, error: upstreamMsg },
         { status: quotaLike ? 429 : 502 },
       );
     }
 
-    const vndPerUnit = buildVndPerUnit(data);
+    const vndPerUnit = buildVndPerUnit(json.data);
     const lastUpdatedAt = json.meta?.last_updated_at ?? null;
 
     return NextResponse.json(

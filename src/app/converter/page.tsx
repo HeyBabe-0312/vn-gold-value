@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import {
   ArrowLeftRight,
   RefreshCw,
@@ -17,8 +17,8 @@ import * as SelectPrimitive from "@radix-ui/react-select";
 import { FX_ORDER, FX_CURRENCY_META } from "@/lib/fx-currencies";
 import type { VnLocale } from "@/lib/vn-setting";
 import { intlLocaleForApp } from "@/lib/vn-setting";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { fetchExchangeRates } from "@/store/exchangeRatesSlice";
+import { formatIsoInstantForAppLocale } from "@/lib/vang-today";
+import { useAppSelector } from "@/store/hooks";
 
 type CurrencyRow = {
   code: string;
@@ -51,10 +51,7 @@ function buildCurrencyList(
       rate: rate ?? 0,
     };
   });
-  return [
-    { code: "VND", name: vndDisplayName, flag: "🇻🇳", rate: 1 },
-    ...fx,
-  ];
+  return [{ code: "VND", name: vndDisplayName, flag: "🇻🇳", rate: 1 }, ...fx];
 }
 
 function CurrencySelect({
@@ -73,11 +70,13 @@ function CurrencySelect({
 
   return (
     <SelectPrimitive.Root value={value} onValueChange={onChange}>
-      <SelectPrimitive.Trigger className="flex h-10 w-full items-center justify-between rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[#F59E0B] cursor-pointer transition-colors hover:bg-[var(--bg-card-hover)]">
+      <SelectPrimitive.Trigger className="flex min-h-[44px] h-11 w-full items-center justify-between rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[#F59E0B] cursor-pointer transition-colors hover:bg-[var(--bg-card-hover)] sm:h-10 sm:min-h-10">
         <div className="flex items-center gap-2">
           <span className="text-base">{selected?.flag}</span>
           <span className="font-mono font-semibold">{selected?.code}</span>
-          <span className="text-[var(--text-muted)] text-xs hidden sm:block">{selected?.name}</span>
+          <span className="text-[var(--text-muted)] text-xs hidden sm:block">
+            {selected?.name}
+          </span>
         </div>
         <ChevronDown className="h-4 w-4 text-[var(--text-muted)] shrink-0" />
       </SelectPrimitive.Trigger>
@@ -98,8 +97,12 @@ function CurrencySelect({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="font-mono font-semibold">{opt.code}</span>
-                    <SelectPrimitive.ItemText className="sr-only">{opt.code}</SelectPrimitive.ItemText>
-                    <span className="text-xs text-[var(--text-muted)] truncate">{opt.name}</span>
+                    <SelectPrimitive.ItemText className="sr-only">
+                      {opt.code}
+                    </SelectPrimitive.ItemText>
+                    <span className="text-xs text-[var(--text-muted)] truncate">
+                      {opt.name}
+                    </span>
                   </div>
                 </div>
                 <SelectPrimitive.ItemIndicator>
@@ -127,34 +130,28 @@ function convertAmount(
   return to === "VND" ? inVnd : inVnd / toCur.rate;
 }
 
-function formatFxMeta(iso: string | null, locale: string) {
-  if (!iso) return null;
-  try {
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return iso;
-    return d.toLocaleString(locale, {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  } catch {
-    return iso;
-  }
-}
-
 export default function ConverterPage() {
   const { t, language } = useApp();
   const vndLabel = t.currencyNameVnd;
-  const dispatch = useAppDispatch();
   const fxState = useAppSelector((s) => s.exchangeRates);
 
   const [fromCur, setFromCur] = useState("VND");
   const [toCur, setToCur] = useState("USD");
   const [amount, setAmount] = useState("1000000");
   const [isSwapping, setIsSwapping] = useState(false);
+  const [refreshSuccess, setRefreshSuccess] = useState(false);
+  const [refreshSpinning, setRefreshSpinning] = useState(false);
+  const refreshSuccessTimer = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  const refreshSpinTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  useEffect(() => {
+    return () => {
+      if (refreshSuccessTimer.current) clearTimeout(refreshSuccessTimer.current);
+      if (refreshSpinTimer.current) clearTimeout(refreshSpinTimer.current);
+    };
+  }, []);
 
   const currencies = useMemo(
     () => buildCurrencyList(fxState.vndPerUnit, language, vndLabel),
@@ -187,52 +184,86 @@ export default function ConverterPage() {
     setAmount(cleaned);
   };
 
+  /** Không gọi API (free tier ~1 lần/ngày); chỉ báo thành công sau khi icon xoay xong. */
   const handleRefresh = () => {
-    void dispatch(fetchExchangeRates({ force: true }));
+    if (!ready) return;
+    const spinMs = 900;
+    const successMs = 2500;
+
+    if (refreshSpinTimer.current) clearTimeout(refreshSpinTimer.current);
+    if (refreshSuccessTimer.current) clearTimeout(refreshSuccessTimer.current);
+
+    setRefreshSuccess(false);
+    setRefreshSpinning(true);
+
+    refreshSpinTimer.current = setTimeout(() => {
+      setRefreshSpinning(false);
+      refreshSpinTimer.current = null;
+      setRefreshSuccess(true);
+      refreshSuccessTimer.current = setTimeout(() => {
+        setRefreshSuccess(false);
+        refreshSuccessTimer.current = null;
+      }, successMs);
+    }, spinMs);
   };
 
   const locale = intlLocaleForApp(language);
-  const updatedLabel = formatFxMeta(fxState.lastUpdatedAt, locale);
+  const updatedLabel = formatIsoInstantForAppLocale(
+    fxState.lastUpdatedAt,
+    locale,
+  );
 
   return (
-    <div className="flex flex-col gap-6 p-4 md:p-6 pb-24 md:pb-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold text-[var(--text-primary)]">{t.converter}</h1>
-          <p className="text-sm text-[var(--text-muted)] mt-0.5">
+    <div className="flex flex-col gap-4 sm:gap-6 p-3 sm:p-4 md:p-6 pb-24 md:pb-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-lg sm:text-xl font-bold text-[var(--text-primary)]">
+            {t.converter}
+          </h1>
+          <p className="text-xs sm:text-sm text-[var(--text-muted)] mt-0.5">
             {t.converterSubtitle}
           </p>
           {updatedLabel && (
-            <p className="text-[11px] text-[var(--text-muted)] mt-1 font-mono">
-              {t.converterLastUpdatedUtc}: {updatedLabel}
+            <p className="text-[10px] sm:text-[11px] text-[var(--text-muted)] mt-1 font-mono break-words">
+              {t.converterLastUpdated}: {updatedLabel}
             </p>
           )}
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-2 font-mono text-xs"
-          onClick={handleRefresh}
-          disabled={fxState.status === "loading"}
-        >
-          <RefreshCw
-            className={cn("h-3.5 w-3.5", fxState.status === "loading" && "animate-spin")}
-          />
-          {t.refresh}
-        </Button>
+        <div className="flex flex-col items-stretch gap-1.5 sm:items-end sm:shrink-0">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 font-mono text-xs min-h-11 w-full sm:min-h-8 sm:w-auto justify-center sm:justify-start"
+            onClick={handleRefresh}
+            disabled={!ready}
+          >
+            <RefreshCw
+              className={cn(
+                "h-3.5 w-3.5 shrink-0 origin-center motion-safe:transition-transform",
+                refreshSpinning && "motion-safe:animate-spin",
+              )}
+              aria-hidden
+            />
+            {t.refresh}
+          </Button>
+          {refreshSuccess && (
+            <p className="text-xs font-medium text-[#10B981] w-full text-center sm:max-w-[220px] sm:text-right">
+              {t.converterRefreshSuccess}
+            </p>
+          )}
+        </div>
       </div>
 
-      {fxState.status === "failed" && Object.keys(fxState.vndPerUnit).length === 0 && (
-        <div className="flex items-center gap-2 rounded-xl border border-[#EF4444]/30 bg-[#EF4444]/5 px-4 py-3 text-sm text-[#EF4444]">
-          <AlertCircle className="h-4 w-4 shrink-0" />
-          <div>
-            <p className="font-medium">{fxState.error}</p>
-            <p className="text-xs mt-1 opacity-90">
-              {t.converterEnvKeyHint}
-            </p>
+      {fxState.status === "failed" &&
+        Object.keys(fxState.vndPerUnit).length === 0 && (
+          <div className="flex items-center gap-2 rounded-xl border border-[#EF4444]/30 bg-[#EF4444]/5 px-4 py-3 text-sm text-[#EF4444]">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <div>
+              <p className="font-medium">{fxState.error}</p>
+              <p className="text-xs mt-1 opacity-90">{t.converterEnvKeyHint}</p>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       {fxState.error && fxState.status === "succeeded" && (
         <div className="flex items-center gap-2 rounded-xl border border-[#F59E0B]/30 bg-[#F59E0B]/5 px-4 py-2 text-xs text-[var(--text-secondary)]">
@@ -241,8 +272,8 @@ export default function ConverterPage() {
         </div>
       )}
 
-      <Card glowGold className="max-w-2xl">
-        <CardContent className="p-6 relative">
+      <Card glowGold className="max-w-2xl w-full">
+        <CardContent className="p-4 sm:p-6 relative">
           {fxState.status === "loading" && !ready && (
             <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-[var(--bg-card)]/80 backdrop-blur-sm">
               <p className="text-sm text-[var(--text-muted)] font-mono">
@@ -255,19 +286,19 @@ export default function ConverterPage() {
             <label className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
               {t.from}
             </label>
-            <div className="flex gap-3">
-              <div className="flex-1">
+            <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
+              <div className="min-w-0 flex-1">
                 <Input
                   type="text"
                   inputMode="numeric"
                   value={amount}
                   onChange={(e) => handleAmountChange(e.target.value)}
-                  className="text-lg font-mono font-semibold h-12"
+                  className="text-base sm:text-lg font-mono font-semibold min-h-[48px] h-12 w-full"
                   placeholder="0"
                   disabled={!ready}
                 />
               </div>
-              <div className="w-48 shrink-0">
+              <div className="w-full shrink-0 sm:w-48">
                 <CurrencySelect
                   value={fromCur}
                   onChange={setFromCur}
@@ -285,9 +316,14 @@ export default function ConverterPage() {
               size="icon"
               onClick={handleSwap}
               disabled={!ready}
-              className="mx-4 h-10 w-10 rounded-full border-2 border-[#F59E0B]/30 hover:border-[#F59E0B]/60 hover:bg-[#F59E0B]/5 transition-all"
+              className="mx-3 sm:mx-4 h-11 w-11 min-h-[44px] min-w-[44px] sm:h-10 sm:w-10 sm:min-h-0 sm:min-w-0 rounded-full border-2 border-[#F59E0B]/30 hover:border-[#F59E0B]/60 hover:bg-[#F59E0B]/5 transition-all"
             >
-              <ArrowLeftRight className={cn("h-4 w-4 text-[#F59E0B] transition-transform duration-200", isSwapping && "rotate-180")} />
+              <ArrowLeftRight
+                className={cn(
+                  "h-[18px] w-[18px] sm:h-4 sm:w-4 text-[#F59E0B] transition-transform duration-200",
+                  isSwapping && "rotate-180",
+                )}
+              />
             </Button>
             <div className="flex-1 h-px bg-[var(--border-default)]" />
           </div>
@@ -296,20 +332,24 @@ export default function ConverterPage() {
             <label className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
               {t.to}
             </label>
-            <div className="flex gap-3">
-              <div className="flex-1">
-                <div className="flex h-12 w-full items-center rounded-lg border border-[var(--border-default)] bg-[var(--bg-secondary)] px-3 py-2">
-                  <span className="text-lg font-mono font-bold text-[var(--text-primary)] truncate">
+            <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
+              <div className="min-w-0 flex-1">
+                <div className="flex min-h-[48px] h-12 w-full items-center rounded-lg border border-[var(--border-default)] bg-[var(--bg-secondary)] px-3 py-2">
+                  <span className="text-base sm:text-lg font-mono font-bold text-[var(--text-primary)] break-all sm:truncate sm:break-normal">
                     {ready
                       ? formatNumber(
                           result,
-                          toCur === "VND" ? 0 : toCur === "JPY" || toCur === "KRW" ? 2 : 4,
+                          toCur === "VND"
+                            ? 0
+                            : toCur === "JPY" || toCur === "KRW"
+                              ? 2
+                              : 4,
                         )
                       : "—"}
                   </span>
                 </div>
               </div>
-              <div className="w-48 shrink-0">
+              <div className="w-full shrink-0 sm:w-48">
                 <CurrencySelect
                   value={toCur}
                   onChange={setToCur}
@@ -320,23 +360,25 @@ export default function ConverterPage() {
             </div>
           </div>
 
-          <div className="rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] p-4">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-xs text-[var(--text-muted)] mb-1">{t.exchangeRate}</p>
-                {ready && crossRate > 0 ? (
-                  <>
-                    <p className="text-sm font-mono font-semibold text-[var(--text-primary)]">
-                      1 {fromCur} = {formatNumber(crossRate, 6)} {toCur}
-                    </p>
-                    <p className="text-xs font-mono text-[var(--text-muted)] mt-0.5">
-                      1 {toCur} = {formatNumber(1 / crossRate, 6)} {fromCur}
-                    </p>
-                  </>
-                ) : (
-                  <p className="text-sm font-mono text-[var(--text-muted)]">—</p>
-                )}
-              </div>
+          <div className="rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] p-3 sm:p-4">
+            <div className="min-w-0">
+              <p className="text-[10px] sm:text-xs text-[var(--text-muted)] mb-1">
+                {t.exchangeRate}
+              </p>
+              {ready && crossRate > 0 ? (
+                <>
+                  <p className="text-xs sm:text-sm font-mono font-semibold text-[var(--text-primary)] leading-snug break-words">
+                    1 {fromCur} = {formatNumber(crossRate, 6)} {toCur}
+                  </p>
+                  <p className="text-[10px] sm:text-xs font-mono text-[var(--text-muted)] mt-1 leading-snug break-words">
+                    1 {toCur} = {formatNumber(1 / crossRate, 6)} {fromCur}
+                  </p>
+                </>
+              ) : (
+                <p className="text-sm font-mono text-[var(--text-muted)]">
+                  —
+                </p>
+              )}
             </div>
           </div>
         </CardContent>
@@ -346,7 +388,7 @@ export default function ConverterPage() {
         <h2 className="text-base font-semibold text-[var(--text-primary)] mb-3">
           {t.currencyRatesTitle}
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
           {FX_ORDER.map((code) => {
             const meta = FX_CURRENCY_META[code];
             const vnd = fxState.vndPerUnit[code];
@@ -357,7 +399,8 @@ export default function ConverterPage() {
                 key={code}
                 className={cn(
                   "transition-all",
-                  has && "hover:bg-[var(--bg-card-hover)] cursor-pointer hover:border-[#F59E0B]/30 hover:shadow-[0_0_0_1px_rgba(245,158,11,0.2)]",
+                  has &&
+                    "hover:bg-[var(--bg-card-hover)] cursor-pointer hover:border-[#F59E0B]/30 hover:shadow-[0_0_0_1px_rgba(245,158,11,0.2)]",
                 )}
                 onClick={() => {
                   if (!has) return;
@@ -366,11 +409,13 @@ export default function ConverterPage() {
                   setAmount("1000000");
                 }}
               >
-                <CardContent className="p-4">
+                <CardContent className="p-3 sm:p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-xl">{meta.flag}</span>
                     <div>
-                      <p className="text-sm font-mono font-bold text-[var(--text-primary)]">{code}</p>
+                      <p className="text-sm font-mono font-bold text-[var(--text-primary)]">
+                        {code}
+                      </p>
                       <p className="text-xs text-[var(--text-muted)]">{name}</p>
                     </div>
                   </div>

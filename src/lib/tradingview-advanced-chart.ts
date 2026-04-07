@@ -69,3 +69,19 @@ export function useTradingViewChartLayoutBucket(): number {
 
   return bucket;
 }
+
+/**
+ * Remove scripts and iframe/content left by TradingView embed so a new config
+ * (e.g. theme) can load without stale widgets.
+ */
+export function purgeTradingViewEmbedContainer(container: HTMLElement): void {
+  container.querySelectorAll("script").forEach((s) => {
+    s.remove();
+  });
+  const widgetHost = container.querySelector(
+    ".tradingview-widget-container__widget",
+  );
+  if (widgetHost) {
+    widgetHost.replaceChildren();
+  }
+}

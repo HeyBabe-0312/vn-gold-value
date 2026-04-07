@@ -168,20 +168,20 @@ export default function GoldPricePage() {
       : null;
 
   return (
-    <div className="flex flex-col gap-6 p-4 md:p-6 pb-24 md:pb-6">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold text-[var(--text-primary)]">
+    <div className="flex flex-col gap-6 p-4 md:p-6 pb-24 md:pb-6 max-sm:gap-4 max-sm:p-3">
+      <div className="flex items-start justify-between gap-3 max-sm:flex-col max-sm:gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl font-bold text-[var(--text-primary)] max-sm:text-lg">
             {t.goldPrice}
           </h1>
-          <p className="text-sm text-[var(--text-muted)] mt-0.5 font-mono">
+          <p className="text-sm text-[var(--text-muted)] mt-0.5 font-mono max-sm:text-xs max-sm:break-words">
             {loading
               ? t.loading
               : updateLabel
                 ? `${t.updatedPrefix} ${updateLabel}`
                 : "—"}
           </p>
-          <p className="text-[11px] text-[var(--text-muted)] mt-1 max-w-md">
+          <p className="text-[11px] text-[var(--text-muted)] mt-1 max-w-md max-sm:text-[10px] max-sm:leading-relaxed">
             {currency === "USD" && (
               <>
                 {t.goldPriceUsdDisclaimer.replace(
@@ -192,8 +192,8 @@ export default function GoldPricePage() {
             )}
           </p>
         </div>
-        <div className="flex flex-col items-end gap-2 shrink-0 sm:flex-row sm:items-center">
-          <Badge variant="live">
+        <div className="flex flex-row flex-wrap items-center justify-end gap-2 shrink-0 self-end max-sm:w-full sm:self-auto">
+          <Badge variant="live" className="max-sm:min-h-9 max-sm:py-1.5">
             <span className="pulse-dot h-1.5 w-1.5 rounded-full bg-[#10B981]" />
             {t.api}
           </Badge>
@@ -207,7 +207,7 @@ export default function GoldPricePage() {
               variant={goldUnit === "luong" ? "default" : "ghost"}
               size="sm"
               className={cn(
-                "h-7 px-2.5 text-xs",
+                "h-7 px-2.5 text-xs max-sm:h-8 max-sm:px-2",
                 goldUnit !== "luong" && "text-[var(--text-muted)]",
               )}
               onClick={() => setGoldUnit("luong")}
@@ -219,7 +219,7 @@ export default function GoldPricePage() {
               variant={goldUnit === "chi" ? "default" : "ghost"}
               size="sm"
               className={cn(
-                "h-7 px-2.5 text-xs",
+                "h-7 px-2.5 text-xs max-sm:h-8 max-sm:px-2",
                 goldUnit !== "chi" && "text-[var(--text-muted)]",
               )}
               onClick={() => setGoldUnit("chi")}
@@ -250,20 +250,20 @@ export default function GoldPricePage() {
 
       {world && (
         <Card className="border-[#8B5CF6]/20 bg-[#8B5CF6]/5">
-          <CardContent className="p-4 flex flex-wrap items-center justify-between gap-3">
+          <CardContent className="p-4 flex flex-wrap items-center justify-between gap-3 max-sm:flex-col max-sm:items-stretch max-sm:justify-start max-sm:gap-3 max-sm:p-3">
             <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+              <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] max-sm:text-[10px]">
                 {t.worldGoldCardTitle}
               </p>
-              <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                <p className="text-lg font-bold font-mono text-[var(--text-primary)]">
+              <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1 max-sm:flex-col max-sm:items-start max-sm:gap-1">
+                <p className="text-lg font-bold font-mono text-[var(--text-primary)] max-sm:text-base max-sm:break-words">
                   {formatUsdOz(world.buy)}
-                  <span className="text-sm font-normal text-[var(--text-muted)] ml-1.5">
+                  <span className="text-sm font-normal text-[var(--text-muted)] ml-1.5 max-sm:text-xs">
                     {t.goldPricePerOzSuffix}
                   </span>
                 </p>
                 {worldVndDisplay != null && (
-                  <p className="text-sm font-mono text-[var(--text-secondary)]">
+                  <p className="text-sm font-mono text-[var(--text-secondary)] max-sm:text-xs max-sm:break-words">
                     {formatWorldGoldVndByUnit(
                       worldVndDisplay,
                       currency,
@@ -274,7 +274,7 @@ export default function GoldPricePage() {
                   </p>
                 )}
               </div>
-              <p className="text-[11px] text-[var(--text-muted)] mt-1 leading-relaxed">
+              <p className="text-[11px] text-[var(--text-muted)] mt-1 leading-relaxed max-sm:mt-2 max-sm:text-[10px] max-sm:leading-snug max-sm:break-words">
                 {t.goldPriceWorldVndFormula
                   .replace(
                     "{rate}",
@@ -291,14 +291,14 @@ export default function GoldPricePage() {
             </div>
             <div
               className={cn(
-                "flex items-center gap-1 text-sm font-mono font-medium",
+                "flex items-center gap-1 text-sm font-mono font-medium max-sm:shrink-0",
                 world.changePercent >= 0 ? "text-[#10B981]" : "text-[#EF4444]",
               )}
             >
               {world.changePercent >= 0 ? (
-                <TrendingUp className="h-4 w-4" />
+                <TrendingUp className="h-4 w-4 shrink-0" />
               ) : (
-                <TrendingDown className="h-4 w-4" />
+                <TrendingDown className="h-4 w-4 shrink-0" />
               )}
               {world.changePercent >= 0 ? "+" : ""}
               {world.changePercent.toFixed(2)}%
@@ -307,43 +307,43 @@ export default function GoldPricePage() {
         </Card>
       )}
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-sm:gap-2">
         {refSjc ? (
           <>
             <Card className="hover:bg-[var(--bg-card-hover)] transition-colors cursor-default">
-              <CardContent className="p-4">
+              <CardContent className="p-4 max-sm:p-3">
                 <p className="text-xs text-[var(--text-muted)] mb-1 uppercase tracking-wide">
                   {refSjc.code} · {t.buy}
                 </p>
-                <p className="text-lg font-bold font-mono text-[var(--text-primary)]">
+                <p className="text-lg font-bold font-mono text-[var(--text-primary)] max-sm:text-base max-sm:break-words">
                   {formatDomestic(refSjc.buy)}
                 </p>
-                <p className="text-xs text-[var(--text-muted)] mt-0.5 truncate">
+                <p className="text-xs text-[var(--text-muted)] mt-0.5 max-sm:line-clamp-2 max-sm:text-[10px] sm:truncate">
                   {refSjc.name} · {unitSuffix}
                 </p>
               </CardContent>
             </Card>
             <Card className="hover:bg-[var(--bg-card-hover)] transition-colors cursor-default">
-              <CardContent className="p-4">
+              <CardContent className="p-4 max-sm:p-3">
                 <p className="text-xs text-[var(--text-muted)] mb-1 uppercase tracking-wide">
                   {refSjc.code} · {t.sell}
                 </p>
-                <p className="text-lg font-bold font-mono text-[var(--text-primary)]">
+                <p className="text-lg font-bold font-mono text-[var(--text-primary)] max-sm:text-base max-sm:break-words">
                   {formatDomestic(refSjc.sell)}
                 </p>
-                <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                <p className="text-xs text-[var(--text-muted)] mt-0.5 max-sm:text-[10px]">
                   {t.reference} · {unitSuffix}
                 </p>
               </CardContent>
             </Card>
             <Card className="hover:bg-[var(--bg-card-hover)] transition-colors cursor-default">
-              <CardContent className="p-4">
+              <CardContent className="p-4 max-sm:p-3">
                 <p className="text-xs text-[var(--text-muted)] mb-1 uppercase tracking-wide">
                   {t.spreadLabel}
                 </p>
                 <p
                   className={cn(
-                    "text-lg font-bold font-mono",
+                    "text-lg font-bold font-mono max-sm:text-base max-sm:break-words",
                     spread != null && spread >= 0
                       ? "text-[var(--text-primary)]"
                       : "text-[#EF4444]",
@@ -351,19 +351,19 @@ export default function GoldPricePage() {
                 >
                   {spread != null ? formatDomestic(spread) : "—"}
                 </p>
-                <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                <p className="text-xs text-[var(--text-muted)] mt-0.5 max-sm:text-[10px]">
                   {t.spreadLabel} · {unitSuffix}
                 </p>
               </CardContent>
             </Card>
             <Card className="hover:bg-[var(--bg-card-hover)] transition-colors cursor-default">
-              <CardContent className="p-4">
+              <CardContent className="p-4 max-sm:p-3">
                 <p className="text-xs text-[var(--text-muted)] mb-1 uppercase tracking-wide">
                   {t.volatilitySell}
                 </p>
                 <p
                   className={cn(
-                    "text-lg font-bold font-mono",
+                    "text-lg font-bold font-mono max-sm:text-base",
                     refSjc.changePercent >= 0
                       ? "text-[#10B981]"
                       : "text-[#EF4444]",
@@ -372,7 +372,7 @@ export default function GoldPricePage() {
                   {refSjc.changePercent >= 0 ? "+" : ""}
                   {refSjc.changePercent.toFixed(2)}%
                 </p>
-                <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                <p className="text-xs text-[var(--text-muted)] mt-0.5 max-sm:text-[10px]">
                   {t.vsPrevSession}
                 </p>
               </CardContent>
@@ -393,16 +393,16 @@ export default function GoldPricePage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-[var(--border-default)]">
-                <th className="text-left py-3 px-4">
+                <th className="text-left py-3 px-4 max-sm:py-2 max-sm:px-2">
                   <button
                     type="button"
                     onClick={() => handleSort("type")}
-                    className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
+                    className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors cursor-pointer max-sm:text-[10px] max-sm:min-h-9"
                   >
                     {t.sourceType} {renderSortIcon("type")}
                   </button>
                 </th>
-                <th className="text-right py-3 px-4 hidden md:table-cell">
+                <th className="text-right py-3 px-4 max-sm:py-2 max-sm:px-2 hidden md:table-cell">
                   <button
                     type="button"
                     onClick={() => handleSort("buy")}
@@ -418,11 +418,11 @@ export default function GoldPricePage() {
                     </span>
                   </button>
                 </th>
-                <th className="text-right py-3 px-4">
+                <th className="text-right py-3 px-4 max-sm:py-2 max-sm:px-2">
                   <button
                     type="button"
                     onClick={() => handleSort("sell")}
-                    className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors cursor-pointer ml-auto"
+                    className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors cursor-pointer ml-auto max-sm:text-[10px] max-sm:min-h-9"
                   >
                     <span className="flex flex-col items-end gap-0.5">
                       <span className="flex items-center gap-1">
@@ -434,17 +434,17 @@ export default function GoldPricePage() {
                     </span>
                   </button>
                 </th>
-                <th className="text-right py-3 px-4 hidden sm:table-cell">
+                <th className="text-right py-3 px-4 max-sm:py-2 max-sm:px-2 hidden sm:table-cell">
                   <button
                     type="button"
                     onClick={() => handleSort("change")}
-                    className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors cursor-pointer ml-auto"
+                    className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors cursor-pointer ml-auto max-sm:text-[10px] max-sm:min-h-9"
                   >
                     {t.change} {renderSortIcon("change")}
                   </button>
                 </th>
-                <th className="text-center py-3 px-4 hidden lg:table-cell">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                <th className="text-center py-3 px-4 max-sm:py-2 max-sm:px-2 hidden lg:table-cell">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] max-sm:text-[10px]">
                     {t.trend}
                   </span>
                 </th>
@@ -478,34 +478,34 @@ export default function GoldPricePage() {
                       key={item.code}
                       className="border-b border-[var(--border-subtle)] last:border-0 hover:bg-[var(--bg-card-hover)] transition-colors cursor-default"
                     >
-                      <td className="py-4 px-4">
-                        <div className="flex items-center gap-2.5 min-w-[140px]">
+                      <td className="py-4 px-4 max-sm:py-3 max-sm:px-2">
+                        <div className="flex items-center gap-2.5 min-w-[140px] max-sm:min-w-0 max-sm:gap-2">
                           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#F59E0B]/10 shrink-0">
                             <span className="text-[10px] font-bold font-mono text-[#F59E0B] leading-none">
                               {initials}
                             </span>
                           </div>
                           <div className="min-w-0">
-                            <p className="font-semibold text-[var(--text-primary)] truncate">
+                            <p className="font-semibold text-[var(--text-primary)] max-sm:line-clamp-2 max-sm:text-sm sm:truncate">
                               {item.name}
                             </p>
-                            <p className="text-xs text-[var(--text-muted)] font-mono">
+                            <p className="text-xs text-[var(--text-muted)] font-mono max-sm:text-[10px]">
                               {item.code}
                             </p>
                           </div>
                         </div>
                       </td>
-                      <td className="py-4 px-4 text-right hidden md:table-cell">
+                      <td className="py-4 px-4 max-sm:py-3 max-sm:px-2 text-right hidden md:table-cell">
                         <span className="font-mono font-medium text-[var(--text-secondary)]">
                           {formatDomestic(item.buy)}
                         </span>
                       </td>
-                      <td className="py-4 px-4 text-right">
-                        <span className="font-mono font-bold text-[var(--text-primary)]">
+                      <td className="py-4 px-4 max-sm:py-3 max-sm:px-2 text-right">
+                        <span className="font-mono font-bold text-[var(--text-primary)] max-sm:text-sm max-sm:tabular-nums">
                           {formatDomestic(item.sell)}
                         </span>
                       </td>
-                      <td className="py-4 px-4 text-right hidden sm:table-cell">
+                      <td className="py-4 px-4 max-sm:py-3 max-sm:px-2 text-right hidden sm:table-cell">
                         <div
                           className={cn(
                             "inline-flex items-center gap-1 text-xs font-mono font-medium",
@@ -521,7 +521,7 @@ export default function GoldPricePage() {
                           {item.changePercent.toFixed(2)}%
                         </div>
                       </td>
-                      <td className="py-4 px-4 hidden lg:table-cell">
+                      <td className="py-4 px-4 max-sm:py-3 max-sm:px-2 hidden lg:table-cell">
                         <div className="flex justify-center">
                           <Sparkline isUp={isUp} />
                         </div>

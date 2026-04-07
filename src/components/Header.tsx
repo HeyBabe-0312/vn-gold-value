@@ -99,7 +99,7 @@ export function Header() {
 
         {/* Center: Live gold ticker */}
         <div className="flex items-center gap-4">
-          <div className="hidden md:flex items-center gap-2 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-1.5">
+          {/* <div className="hidden md:flex items-center gap-2 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-1.5">
             <div className="flex items-center gap-1.5">
               <span className="pulse-dot h-1.5 w-1.5 rounded-full bg-[#10B981]" />
               <Badge variant="live" className="text-xs">
@@ -170,7 +170,7 @@ export function Header() {
                 )}
               </span>
             </div>
-          </div>
+          </div> */}
 
           {mounted && (
             <div className="hidden lg:flex items-center gap-1.5 text-xs text-[var(--text-muted)] font-mono">

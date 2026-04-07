@@ -148,6 +148,38 @@ function parseVietnamWallDateTime(date?: string, time?: string): Date | null {
   return Number.isNaN(out.getTime()) ? null : out;
 }
 
+/** Shared with gold-price, converter, etc. — local TZ, numeric day/month/year + h:m:s. */
+export const APP_DATETIME_LOCALE_OPTIONS: Intl.DateTimeFormatOptions = {
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+};
+
+export function formatInstantForAppLocale(
+  instant: Date,
+  intlLocale: string,
+  options?: Intl.DateTimeFormatOptions,
+): string {
+  return instant.toLocaleString(intlLocale, {
+    ...APP_DATETIME_LOCALE_OPTIONS,
+    ...options,
+  });
+}
+
+/** ISO / API datetime string → same display as trang giá vàng. */
+export function formatIsoInstantForAppLocale(
+  iso: string | null | undefined,
+  intlLocale: string,
+): string | null {
+  if (!iso?.trim()) return null;
+  const d = new Date(iso.trim());
+  if (Number.isNaN(d.getTime())) return null;
+  return formatInstantForAppLocale(d, intlLocale);
+}
+
 /** Renders the update instant in the user's local timezone (browser default). */
 export function formatGoldPricesUpdatedLocal(
   meta: VangTodayClockMeta,
@@ -156,13 +188,5 @@ export function formatGoldPricesUpdatedLocal(
 ): string | null {
   const instant = goldPricesInstantFromMeta(meta);
   if (!instant) return null;
-  return instant.toLocaleString(intlLocale, {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    ...options,
-  });
+  return formatInstantForAppLocale(instant, intlLocale, options);
 }

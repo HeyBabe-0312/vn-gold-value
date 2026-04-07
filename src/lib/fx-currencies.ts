@@ -32,7 +32,7 @@ export const FX_CURRENCY_META: Record<
   THB: { name: "Thai Baht", nameVi: "Baht Thái", nameJp: "タイバーツ", flag: "🇹🇭" },
 };
 
-/** API `currencies` param (USD base; VND required to derive ₫/unit). */
+/** `currencies` query for CurrencyAPI `latest` (USD base; VND required to derive ₫/unit). */
 export const EXCHANGE_API_CURRENCIES = [
   "VND",
   ...FX_ORDER.filter((c) => c !== "USD"),
