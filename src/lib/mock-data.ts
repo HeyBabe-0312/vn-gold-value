@@ -80,8 +80,7 @@ function generateChartData(
     const total = 6 * 60 + minutesFromStart;
     const h = Math.floor(total / 60) % 24;
     const m = total % 60;
-    const wave =
-      Math.sin(idx * 0.35) * 130_000 + Math.cos(idx * 0.21) * 70_000;
+    const wave = Math.sin(idx * 0.35) * 130_000 + Math.cos(idx * 0.21) * 70_000;
     price = Math.max(
       Math.round(price + wave * 0.11),
       Math.floor(basePrice * 0.98),
@@ -160,7 +159,7 @@ export const TRANSLATIONS = {
     exchangeRate: "Tỷ giá",
     marketOverview: "Tổng quan thị trường",
     priceChart: "Biểu đồ giá",
-    goldTypes: "Loại vàng",
+    goldTypes: "Giá vàng VN",
     todayStats: "Thống kê hôm nay",
     darkMode: "Chế độ tối",
     lightMode: "Chế độ sáng",
@@ -177,7 +176,8 @@ export const TRANSLATIONS = {
     assetsTotal: "Tổng giá trị",
     assetsUnitHint: "Giá trị quy đổi theo {unit}",
     assetsListTitle: "Danh sách vàng",
-    assetsPerUnitHint: "Giá mỗi đơn vị (API: VND/lượng) + nút +/− để cập nhật số lượng",
+    assetsPerUnitHint:
+      "Giá mỗi đơn vị (API: VND/lượng) + nút +/− để cập nhật số lượng",
     assetsTotalLabel: "Tổng tiền",
     decrease: "Giảm",
     increase: "Tăng",
@@ -249,7 +249,8 @@ export const TRANSLATIONS = {
     assetsTotal: "Total value",
     assetsUnitHint: "Value shown per {unit}",
     assetsListTitle: "Gold list",
-    assetsPerUnitHint: "Price per unit (API: VND per tael) + use +/− to update quantity",
+    assetsPerUnitHint:
+      "Price per unit (API: VND per tael) + use +/− to update quantity",
     assetsTotalLabel: "Total",
     decrease: "Decrease",
     increase: "Increase",

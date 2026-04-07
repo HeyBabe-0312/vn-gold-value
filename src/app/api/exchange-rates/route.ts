@@ -9,9 +9,12 @@ const REVALIDATE_SEC = 6 * 60 * 60;
 interface UpstreamLatest {
   data?: Record<string, { code?: string; value?: number }>;
   meta?: { last_updated_at?: string };
+  message?: string;
 }
 
-function buildVndPerUnit(data: Record<string, { value?: number }>): Record<string, number> {
+function buildVndPerUnit(
+  data: Record<string, { value?: number }>,
+): Record<string, number> {
   const vndPerUsd = data.VND?.value;
   if (vndPerUsd == null || !Number.isFinite(vndPerUsd) || vndPerUsd <= 0) {
     throw new Error("Invalid VND rate in upstream response");
@@ -55,9 +58,17 @@ export async function GET() {
     const json = (await res.json()) as UpstreamLatest;
     const data = json.data;
     if (!data || typeof data !== "object") {
+      const upstreamMsg =
+        typeof json.message === "string" && json.message.trim()
+          ? json.message.trim()
+          : "Invalid upstream payload";
+      const quotaLike =
+        /quota|monthly requests|upgrade your plan|subscription/i.test(
+          upstreamMsg,
+        );
       return NextResponse.json(
-        { success: false, error: "Invalid upstream payload" },
-        { status: 502 },
+        { success: false, error: upstreamMsg },
+        { status: quotaLike ? 429 : 502 },
       );
     }
 
@@ -78,6 +89,9 @@ export async function GET() {
     );
   } catch (e) {
     const message = e instanceof Error ? e.message : "Fetch failed";
-    return NextResponse.json({ success: false, error: message }, { status: 502 });
+    return NextResponse.json(
+      { success: false, error: message },
+      { status: 502 },
+    );
   }
 }

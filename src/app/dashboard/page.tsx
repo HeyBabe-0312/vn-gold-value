@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { BarChart2, TrendingUp, Activity, DollarSign } from "lucide-react";
 import { PriceChart } from "@/components/dashboard/PriceChart";
+import { GoldPriceChart } from "@/components/dashboard/GoldPriceChart";
 import { PriceTicker } from "@/components/dashboard/PriceTicker";
 import { MarketOverview } from "@/components/dashboard/MarketOverview";
 import { StatsCard } from "@/components/dashboard/StatsCard";
@@ -13,6 +14,8 @@ import {
   STATS,
 } from "@/lib/mock-data";
 import { DISPLAY_USD_VND_RATE } from "@/lib/gold-units";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 export default function DashboardPage() {
   const { t, currency } = useApp();
@@ -88,6 +91,33 @@ export default function DashboardPage() {
           iconColor="#3B82F6"
         />
       </div>
+
+      {/* Spot gold (TradingView Advanced Chart) — parent sets height so the widget can use 100% */}
+      <Card className="min-w-0 max-w-full overflow-x-clip overflow-y-visible">
+        <CardHeader className="pb-2 px-4 sm:px-5">
+          <div className="flex items-center gap-2 flex-wrap">
+            <CardTitle className="text-sm font-semibold text-[var(--text-primary)]">
+              {t.spotGoldChartTitle}
+            </CardTitle>
+            <Badge variant="live">
+              <span className="pulse-dot h-1.5 w-1.5 rounded-full bg-[#10B981]" />
+              {t.live}
+            </Badge>
+          </div>
+          <p className="text-xs text-[var(--text-muted)] mt-1">
+            {t.spotGoldChartSubtitle}
+          </p>
+        </CardHeader>
+        <CardContent className="p-0 px-2 pb-4 sm:px-3">
+          {/*
+            dvh: stable height on mobile when the browser chrome shows/hides.
+            Taller min height on small screens so the chart stays usable with touch.
+          */}
+          <div className="h-[min(62dvh,560px)] w-full min-h-[min(280px,55dvh)] sm:min-h-[300px]">
+            <GoldPriceChart />
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Main content grid */}
       <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-3">

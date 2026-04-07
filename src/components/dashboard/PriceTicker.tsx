@@ -1,52 +1,52 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { useMemo } from "react";
+import Link from "next/link";
+import { ChevronRight, TrendingDown, TrendingUp } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { GOLD_PRICES, type GoldPrice } from "@/lib/mock-data";
+import { Button } from "@/components/ui/button";
+import {
+  formatGoldPricesUpdatedLocal,
+  type GoldPriceRow,
+} from "@/lib/vang-today";
 import { useApp } from "@/providers/AppProvider";
+import { intlLocaleForApp } from "@/lib/vn-setting";
+import { useAppSelector } from "@/store/hooks";
 import { cn } from "@/lib/utils";
 
-function PriceRow({ item, flashKey }: { item: GoldPrice; flashKey: number }) {
-  const isUp = item.changePercent >= 0;
-  const [flash, setFlash] = useState<"up" | "down" | null>(null);
-  const prevKey = flashKey;
+const PREVIEW_ROW_LIMIT = 7;
 
-  useEffect(() => {
-    if (prevKey > 0) {
-      // Defer to avoid lint rule "set-state-in-effect".
-      setTimeout(() => setFlash(isUp ? "up" : "down"), 0);
-      const t = setTimeout(() => setFlash(null), 800);
-      return () => clearTimeout(t);
-    }
-  }, [flashKey, isUp, prevKey]);
+function PriceRow({ item }: { item: GoldPriceRow }) {
+  const isUp = item.changePercent >= 0;
+  const initials =
+    item.code.length >= 2
+      ? item.code.slice(0, 2)
+      : item.name.slice(0, 2).toUpperCase();
 
   return (
     <div
       className={cn(
         "flex items-center justify-between py-2.5 px-3 rounded-lg transition-all duration-200 cursor-default",
-        flash === "up" && "flash-green",
-        flash === "down" && "flash-red",
         "hover:bg-[var(--bg-card-hover)]",
       )}
     >
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-2.5 min-w-0 flex-1">
         <div className="flex h-7 w-7 items-center justify-center rounded-md bg-[#F59E0B]/10 shrink-0">
           <span className="text-xs font-bold font-mono text-[#F59E0B]">
-            {item.type.slice(0, 2)}
+            {initials}
           </span>
         </div>
-        <div>
-          <p className="text-sm font-semibold text-[var(--text-primary)]">
-            {item.type}
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-[var(--text-primary)] truncate">
+            {item.name}
           </p>
-          <p className="text-xs text-[var(--text-muted)] font-mono">
-            {item.updatedAt}
+          <p className="text-xs text-[var(--text-muted)] font-mono truncate">
+            {item.code}
           </p>
         </div>
       </div>
 
-      <div className="text-right">
+      <div className="text-right shrink-0 pl-2">
         <p className="text-sm font-mono font-bold text-[var(--text-primary)]">
           {(item.sell / 1_000_000).toFixed(1)}M
         </p>
@@ -72,52 +72,85 @@ function PriceRow({ item, flashKey }: { item: GoldPrice; flashKey: number }) {
 }
 
 export function PriceTicker() {
-  const { t } = useApp();
-  const [prices, setPrices] = useState<GoldPrice[]>(GOLD_PRICES);
-  const [flashKey, setFlashKey] = useState(0);
+  const { t, language } = useApp();
+  const { vndRows, meta, status, error, lastFetchedAt } = useAppSelector(
+    (s) => s.goldPrices,
+  );
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setPrices((prev) =>
-        prev.map((item) => {
-          const delta = (Math.random() - 0.48) * 0.1;
-          const newChange = item.changePercent + delta;
-          const newSell = item.sell + Math.round(delta * item.sell * 0.1);
-          return {
-            ...item,
-            sell: newSell,
-            changePercent: parseFloat(newChange.toFixed(2)),
-            updatedAt: new Date().toLocaleTimeString("vi-VN", {
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
-          };
-        }),
-      );
-      setFlashKey((k) => k + 1);
-    }, 2500);
-    return () => clearInterval(interval);
-  }, []);
+  const rows = useMemo(() => {
+    const list = [...vndRows];
+    list.sort((a, b) => b.sell - a.sell);
+    return list;
+  }, [vndRows]);
+
+  const previewRows = useMemo(
+    () => rows.slice(0, PREVIEW_ROW_LIMIT),
+    [rows],
+  );
+  const hasMoreRows = rows.length > PREVIEW_ROW_LIMIT;
+
+  const updateLabel = useMemo(() => {
+    const fromApi = formatGoldPricesUpdatedLocal(meta, intlLocaleForApp(language));
+    if (fromApi) return fromApi;
+    if (lastFetchedAt) {
+      return new Date(lastFetchedAt).toLocaleString(intlLocaleForApp(language), {
+        hour: "2-digit",
+        minute: "2-digit",
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
+    }
+    return null;
+  }, [meta, language, lastFetchedAt]);
+
+  const loading = status === "idle" || status === "loading";
 
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           <CardTitle className="text-sm font-semibold text-[var(--text-primary)]">
             {t.goldTypes}
           </CardTitle>
-          <div className="flex items-center gap-1 text-xs text-[var(--text-muted)]">
-            <span className="pulse-dot h-1.5 w-1.5 rounded-full bg-[#10B981]" />
-            <span className="text-[#10B981] font-medium text-xs">Live</span>
+          <div className="flex items-center gap-1 text-xs text-[var(--text-muted)] text-right shrink-0">
+            <span>{t.updatedPrefix}</span>
+            <span className="font-medium text-[var(--text-primary)] tabular-nums">
+              {updateLabel ?? (loading ? t.loading : "—")}
+            </span>
           </div>
         </div>
       </CardHeader>
       <CardContent className="pt-0 px-3">
-        <div className="flex flex-col">
-          {prices.map((item) => (
-            <PriceRow key={item.type} item={item} flashKey={flashKey} />
-          ))}
-        </div>
+        {error && status === "failed" && rows.length === 0 ? (
+          <p className="text-sm text-[#EF4444] px-3 py-2">{error}</p>
+        ) : loading && rows.length === 0 ? (
+          <p className="text-sm text-[var(--text-muted)] px-3 py-2">
+            {t.loadingDomestic}
+          </p>
+        ) : rows.length === 0 ? (
+          <p className="text-sm text-[var(--text-muted)] px-3 py-2">
+            {t.noVndRecords}
+          </p>
+        ) : (
+          <div className="flex flex-col">
+            {previewRows.map((item) => (
+              <PriceRow key={item.code} item={item} />
+            ))}
+            {hasMoreRows ? (
+              <Button
+                variant="ghost"
+                className="mt-1 h-9 w-full justify-center gap-1 rounded-lg text-xs font-medium text-[#F59E0B] hover:bg-[var(--bg-card-hover)] hover:text-[#D97706]"
+                asChild
+              >
+                <Link href="/gold-price">
+                  {t.goldTypesSeeAll}
+                  <ChevronRight className="h-3.5 w-3.5" aria-hidden />
+                </Link>
+              </Button>
+            ) : null}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

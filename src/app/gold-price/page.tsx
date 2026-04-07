@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useApp } from "@/providers/AppProvider";
 import { intlLocaleForApp } from "@/lib/vn-setting";
+import { formatGoldPricesUpdatedLocal } from "@/lib/vang-today";
 import { cn } from "@/lib/utils";
 import { LineChart, Line, ResponsiveContainer, Tooltip } from "recharts";
 import { useAppDispatch, useAppSelector, useUsdVndRate } from "@/store/hooks";
@@ -101,21 +102,7 @@ export default function GoldPricePage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const updateLabel = useMemo(() => {
-    if (meta.time && meta.date) return `${meta.time} · ${meta.date}`;
-    if (meta.timestamp) {
-      return new Date(meta.timestamp * 1000).toLocaleString(
-        intlLocaleForApp(language),
-        {
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-        },
-      );
-    }
-    return null;
+    return formatGoldPricesUpdatedLocal(meta, intlLocaleForApp(language));
   }, [meta, language]);
 
   const worldVndDisplay = useMemo(() => {
