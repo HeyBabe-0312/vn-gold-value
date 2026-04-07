@@ -8,7 +8,7 @@ export default createMiddleware({
 });
 
 export const config = {
-  // Exclude API, _next, and static assets
-  matcher: ["/((?!api|_next|.*\\..*).*)"],
+  // Exclude API, _next, _vercel, and static assets
+  matcher: ["/((?!api|_next|_vercel|.*\\..*).*)" ],
 };
 
